@@ -8,6 +8,75 @@ const VimeoLightbox = (() => {
   console.log('📦 VimeoLightbox module loading...');
 
   // ========================================================================
+  // SDK LOADER
+  // ========================================================================
+
+  let vimeoSDKPromise = null;
+
+  /**
+   * Load Vimeo SDK dynamically if not already loaded
+   * @returns {Promise<void>} Resolves when SDK is ready
+   */
+  function loadVimeoSDK() {
+    // Return cached promise if already loading/loaded
+    if (vimeoSDKPromise) {
+      return vimeoSDKPromise;
+    }
+
+    // Check if SDK is already loaded
+    if (typeof window.Vimeo !== 'undefined' && window.Vimeo.Player) {
+      console.log('   ✓ Vimeo SDK already loaded');
+      vimeoSDKPromise = Promise.resolve();
+      return vimeoSDKPromise;
+    }
+
+    console.log('   📥 Loading Vimeo SDK...');
+
+    // Create new promise to load SDK
+    vimeoSDKPromise = new Promise((resolve, reject) => {
+      // Check if script is already being loaded
+      const existingScript = document.querySelector('script[src="https://player.vimeo.com/api/player.js"]');
+      if (existingScript) {
+        // Wait for existing script to load
+        existingScript.addEventListener('load', () => {
+          if (typeof window.Vimeo !== 'undefined' && window.Vimeo.Player) {
+            console.log('   ✓ Vimeo SDK loaded (existing script)');
+            resolve();
+          } else {
+            reject(new Error('Vimeo SDK failed to load'));
+          }
+        });
+        existingScript.addEventListener('error', () => {
+          reject(new Error('Vimeo SDK script failed to load'));
+        });
+        return;
+      }
+
+      // Create and append script tag
+      const script = document.createElement('script');
+      script.src = 'https://player.vimeo.com/api/player.js';
+      script.async = true;
+
+      script.addEventListener('load', () => {
+        if (typeof window.Vimeo !== 'undefined' && window.Vimeo.Player) {
+          console.log('   ✓ Vimeo SDK loaded successfully');
+          resolve();
+        } else {
+          reject(new Error('Vimeo SDK failed to initialize'));
+        }
+      });
+
+      script.addEventListener('error', () => {
+        reject(new Error('Failed to load Vimeo SDK script'));
+      });
+
+      document.head.appendChild(script);
+    });
+
+    return vimeoSDKPromise;
+  }
+
+  // ========================================================================
   // PUBLIC API
   // ========================================================================
 
@@ -320,8 +389,24 @@ const VimeoLightbox = (() => {
       }
 
       if (!player) {
+        // Ensure Vimeo SDK is loaded before creating player
+        try {
+          await loadVimeoSDK();
+        } catch (error) {
+          console.error('   ❌ Failed to load Vimeo SDK:', error);
+          lightbox.setAttribute('data-vimeo-activated', 'false');
+          return;
+        }
+
         iframe.src = `https://player.vimeo.com/video/${vid}?api=1&background=1&autoplay=0&loop=0&muted=0`;
-        player = new Vimeo.Player(iframe);
+        
+        if (typeof window.Vimeo === 'undefined' || !window.Vimeo.Player) {
+          console.error('   ❌ Vimeo SDK not available after loading');
+          lightbox.setAttribute('data-vimeo-activated', 'false');
+          return;
+        }
+
+        player = new window.Vimeo.Player(iframe);
         setupPlayerEvents();
         currentVideoID = vid;
         await runSizing();
@@ -451,6 +536,11 @@ const VimeoLightbox = (() => {
         }
       });
     })();
+
+    // Preload Vimeo SDK in background for faster first video load
+    loadVimeoSDK().catch(err => {
+      console.warn('   ⚠️  Failed to preload Vimeo SDK (will retry on first video):', err);
+    });
 
     console.log('✅ VimeoLightbox initialized');
   }
