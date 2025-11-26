@@ -105,6 +105,24 @@ const Tooltips = (() => {
     // Track tooltip state
     let isActive = false;
     let currentParent = null;
+    let lastMouseX = null;
+    let lastMouseY = null;
+
+    // Helper functions to show/hide tooltip
+    function showTooltip() {
+      tooltip.style.opacity = '1';
+      tooltip.style.visibility = 'visible';
+      tooltip.style.pointerEvents = 'auto';
+    }
+
+    function hideTooltip() {
+      tooltip.style.opacity = '0';
+      tooltip.style.visibility = 'hidden';
+      tooltip.style.pointerEvents = 'none';
+    }
+
+    // Initially hide the tooltip
+    hideTooltip();
 
     // ========================================================================
     // SETUP: Wire parents to update content and activate tooltip
@@ -128,12 +146,23 @@ const Tooltips = (() => {
         
         isActive = true;
         currentParent = parent;
+        
+        // Show tooltip
+        showTooltip();
+        
+        // Immediately position tooltip if we have a last known mouse position
+        if (lastMouseX !== null && lastMouseY !== null) {
+          updateTooltip(lastMouseX, lastMouseY);
+        }
       });
 
       // Deactivate tooltip when leaving parent
       parent.addEventListener('mouseleave', () => {
         isActive = false;
         currentParent = null;
+        
+        // Hide tooltip
+        hideTooltip();
         
         // Reset position
         if (supportsTranslateProp) {
@@ -199,6 +228,8 @@ const Tooltips = (() => {
 
     document.addEventListener('mousemove', function (e) {
       // Store the latest mouse position
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
       pendingMouseEvent = { x: e.clientX, y: e.clientY };
 
       // If no animation frame is scheduled, schedule one
