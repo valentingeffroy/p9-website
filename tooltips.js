@@ -18,16 +18,6 @@ const Tooltips = (() => {
   // ========================================================================
 
   /**
-   * Check if element is visible (enough to be worth correcting)
-   */
-  function isVisible(el) {
-    const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
-    // Even with opacity 0, we'll set position so it's correct when it appears
-    return true;
-  }
-
-  /**
    * Reset translate/transform when tooltip is hidden
    */
   function resetIfHidden(tt, supportsTranslateProp) {
@@ -100,11 +90,14 @@ const Tooltips = (() => {
       // Activate tooltip when hovering parent
       parent.addEventListener('mouseenter', () => {
         tooltip.__isActive = true;
+        // Cache visibility on activation
+        tooltip.__isVisible = true;
       });
 
       // Deactivate tooltip when leaving parent
       parent.addEventListener('mouseleave', () => {
         tooltip.__isActive = false;
+        tooltip.__isVisible = false;
         // Reset position
         if (supportsTranslateProp) {
           tooltip.style.translate = '';
@@ -117,16 +110,24 @@ const Tooltips = (() => {
     });
 
     // ========================================================================
-    // GLOBAL MOUSE MOVE: Update all tooltips on every mouse movement
+    // OPTIMIZED MOUSE MOVE: Use requestAnimationFrame for smooth updates
     // ========================================================================
-    document.addEventListener('mousemove', function (e) {
-      tooltips.forEach(function (tt) {
-        // Always update position – even if tooltip is currently hidden,
-        // when it appears (hover-in), it will already be correctly positioned
-        tt.style.left = (e.clientX + OFFSET) + 'px';
-        tt.style.top = (e.clientY + OFFSET) + 'px';
+    let rafId = null;
+    let pendingMouseEvent = null;
+    const activeTooltips = Array.from(tooltips);
 
-        // First reset corrections, get fresh rect
+    function updateTooltips(mouseX, mouseY) {
+      // Update base position for all tooltips (lightweight, no reflow)
+      activeTooltips.forEach(function (tt) {
+        tt.style.left = (mouseX + OFFSET) + 'px';
+        tt.style.top = (mouseY + OFFSET) + 'px';
+      });
+
+      // Only process active tooltips for expensive calculations (bounding rect, corrections)
+      const active = activeTooltips.filter(tt => tt.__isActive && tt.__isVisible !== false);
+      
+      active.forEach(function (tt) {
+        // Reset translate to get accurate bounding rect
         if (supportsTranslateProp) {
           tt.style.translate = '0px 0px';
         } else {
@@ -135,6 +136,7 @@ const Tooltips = (() => {
             : 'translate(0px, 0px)';
         }
 
+        // Only calculate bounding rect for active tooltips (this is the expensive operation)
         const rect = tt.getBoundingClientRect();
         let dx = 0, dy = 0;
 
@@ -154,40 +156,76 @@ const Tooltips = (() => {
         const overTop = PADDING - rect.top;
         if (overTop > 0) dy += overTop;
 
-        // Apply correction only if tooltip is visible/active
-        if (tt.__isActive && isVisible(tt)) {
-          if (supportsTranslateProp) {
-            tt.style.translate = `${dx}px ${dy}px`;
-          } else {
-            // Add translate to base transform
-            tt.style.transform = (tt.__baseTransform ? tt.__baseTransform + ' ' : '')
-              + `translate(${dx}px, ${dy}px)`;
-          }
+        // Apply correction
+        if (supportsTranslateProp) {
+          tt.style.translate = `${dx}px ${dy}px`;
         } else {
-          // If hidden – keep translate reset
-          resetIfHidden(tt, supportsTranslateProp);
+          tt.style.transform = (tt.__baseTransform ? tt.__baseTransform + ' ' : '')
+            + `translate(${dx}px, ${dy}px)`;
         }
       });
+
+      // Reset translate for inactive tooltips
+      const inactive = activeTooltips.filter(tt => !tt.__isActive);
+      inactive.forEach(function (tt) {
+        if (supportsTranslateProp) {
+          tt.style.translate = '';
+        } else {
+          tt.style.transform = tt.__baseTransform || '';
+        }
+      });
+    }
+
+    document.addEventListener('mousemove', function (e) {
+      // Store the latest mouse position
+      pendingMouseEvent = { x: e.clientX, y: e.clientY };
+
+      // If no animation frame is scheduled, schedule one
+      if (!rafId) {
+        rafId = requestAnimationFrame(function () {
+          if (pendingMouseEvent) {
+            updateTooltips(pendingMouseEvent.x, pendingMouseEvent.y);
+            pendingMouseEvent = null;
+          }
+          rafId = null;
+        });
+      }
     });
 
     // ========================================================================
     // WINDOW RESIZE: Recalculate corrections
     // ========================================================================
+    let resizeRafId = null;
     window.addEventListener('resize', () => {
-      // Trigger mousemove to recalculate positions
-      const evt = new MouseEvent('mousemove', {
-        clientX: window.innerWidth - OFFSET - PADDING,
-        clientY: window.innerHeight - OFFSET - PADDING
+      // Use RAF to debounce resize and recalculate positions smoothly
+      if (resizeRafId) cancelAnimationFrame(resizeRafId);
+      
+      resizeRafId = requestAnimationFrame(() => {
+        // If we have a pending mouse event, recalculate with it
+        // Otherwise use the last known position or center of viewport
+        if (pendingMouseEvent) {
+          updateTooltips(pendingMouseEvent.x, pendingMouseEvent.y);
+        } else {
+          // Use center of viewport as fallback
+          updateTooltips(window.innerWidth / 2, window.innerHeight / 2);
+        }
+        activeTooltips.forEach(tt => resetIfHidden(tt, supportsTranslateProp));
+        resizeRafId = null;
       });
-      document.dispatchEvent(evt);
-      tooltips.forEach(tt => resetIfHidden(tt, supportsTranslateProp));
     });
 
     // ========================================================================
     // WINDOW SCROLL: Reset hidden tooltips (in case of fixed/absolute contexts)
     // ========================================================================
+    let scrollRafId = null;
     window.addEventListener('scroll', () => {
-      tooltips.forEach(tt => resetIfHidden(tt, supportsTranslateProp));
+      // Use RAF to throttle scroll events
+      if (scrollRafId) return;
+      
+      scrollRafId = requestAnimationFrame(() => {
+        activeTooltips.forEach(tt => resetIfHidden(tt, supportsTranslateProp));
+        scrollRafId = null;
+      });
     });
 
     console.log('✅ Tooltips initialized');
