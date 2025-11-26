@@ -36,19 +36,50 @@ const Tooltips = (() => {
   // ========================================================================
 
   /**
+   * Update tooltip content from source element
+   */
+  function updateTooltipContent(tooltip, sourceContent) {
+    if (!tooltip || !sourceContent) return;
+
+    // Find source elements
+    const sourceImage = sourceContent.querySelector('[tooltip="image"]');
+    const sourceText = sourceContent.querySelector('[tooltip="text"]');
+
+    // Find target elements in tooltip
+    const targetImage = tooltip.querySelector('[tooltip="image"]');
+    const targetText = tooltip.querySelector('[tooltip="text"]');
+
+    // Copy image
+    if (sourceImage && targetImage) {
+      const src = sourceImage.getAttribute('src');
+      const alt = sourceImage.getAttribute('alt') || '';
+      if (src) {
+        targetImage.setAttribute('src', src);
+        targetImage.setAttribute('alt', alt);
+      }
+    }
+
+    // Copy text
+    if (sourceText && targetText) {
+      targetText.textContent = sourceText.textContent;
+    }
+  }
+
+  /**
    * Initialize tooltip positioning system
    */
   function init() {
     console.log('🚀 Tooltips.init() called');
 
-    const tooltips = document.querySelectorAll('.h_companies-card_block');
+    // Find single global tooltip
+    const tooltip = document.querySelector('[tooltip="tooltip"]');
 
-    if (!tooltips.length) {
-      console.warn('   ⚠️  No tooltip elements found (.h_companies-card_block)');
+    if (!tooltip) {
+      console.warn('   ⚠️  No tooltip element found ([tooltip="tooltip"])');
       return;
     }
 
-    console.log(`   📍 Found ${tooltips.length} tooltip element(s)`);
+    console.log('   ✓ Single tooltip found');
 
     // Check if browser supports CSS translate property
     const supportsTranslateProp = typeof CSS !== 'undefined'
@@ -58,46 +89,52 @@ const Tooltips = (() => {
     console.log(`   🖥️  CSS translate support: ${supportsTranslateProp ? 'YES' : 'NO'}`);
 
     // ========================================================================
-    // SETUP: Initialize all tooltips
+    // SETUP: Initialize single tooltip
     // ========================================================================
-    tooltips.forEach((tooltip, idx) => {
-      // Save original transform to avoid overwriting scale/rotate
-      const base = getComputedStyle(tooltip).transform;
-      tooltip.__baseTransform = (base && base !== 'none') ? base : '';
+    
+    // Save original transform to avoid overwriting scale/rotate
+    const base = getComputedStyle(tooltip).transform;
+    tooltip.__baseTransform = (base && base !== 'none') ? base : '';
 
-      // Ensure fixed positioning for accurate cursor tracking
-      const pos = getComputedStyle(tooltip).position;
-      if (pos !== 'fixed' && pos !== 'absolute') {
-        tooltip.style.position = 'fixed';
-      }
+    // Ensure fixed positioning for accurate cursor tracking
+    const pos = getComputedStyle(tooltip).position;
+    if (pos !== 'fixed' && pos !== 'absolute') {
+      tooltip.style.position = 'fixed';
+    }
 
-      // Mark tooltip as inactive initially
-      tooltip.__isActive = false;
-
-      console.log(`   ✓ Tooltip ${idx + 1} initialized`);
-    });
+    // Track tooltip state
+    let isActive = false;
+    let currentParent = null;
 
     // ========================================================================
-    // SETUP: Wire parents to activate/deactivate tooltips
+    // SETUP: Wire parents to update content and activate tooltip
     // ========================================================================
     const parents = document.querySelectorAll('.cms_ci.is-h-companies');
     
+    console.log(`   📍 Found ${parents.length} parent element(s)`);
+    
     parents.forEach((parent) => {
-      const tooltip = parent.querySelector('.h_companies-card_block');
+      const sourceContent = parent.querySelector('[tooltip="content"]');
       
-      if (!tooltip) return;
+      if (!sourceContent) {
+        console.warn('   ⚠️  No [tooltip="content"] found in parent');
+        return;
+      }
 
       // Activate tooltip when hovering parent
       parent.addEventListener('mouseenter', () => {
-        tooltip.__isActive = true;
-        // Cache visibility on activation
-        tooltip.__isVisible = true;
+        // Update content before showing
+        updateTooltipContent(tooltip, sourceContent);
+        
+        isActive = true;
+        currentParent = parent;
       });
 
       // Deactivate tooltip when leaving parent
       parent.addEventListener('mouseleave', () => {
-        tooltip.__isActive = false;
-        tooltip.__isVisible = false;
+        isActive = false;
+        currentParent = null;
+        
         // Reset position
         if (supportsTranslateProp) {
           tooltip.style.translate = '';
@@ -114,66 +151,50 @@ const Tooltips = (() => {
     // ========================================================================
     let rafId = null;
     let pendingMouseEvent = null;
-    const activeTooltips = Array.from(tooltips);
 
-    function updateTooltips(mouseX, mouseY) {
-      // Update base position for all tooltips (lightweight, no reflow)
-      activeTooltips.forEach(function (tt) {
-        tt.style.left = (mouseX + OFFSET) + 'px';
-        tt.style.top = (mouseY + OFFSET) + 'px';
-      });
+    function updateTooltip(mouseX, mouseY) {
+      if (!isActive) return;
 
-      // Only process active tooltips for expensive calculations (bounding rect, corrections)
-      const active = activeTooltips.filter(tt => tt.__isActive && tt.__isVisible !== false);
-      
-      active.forEach(function (tt) {
-        // Reset translate to get accurate bounding rect
-        if (supportsTranslateProp) {
-          tt.style.translate = '0px 0px';
-        } else {
-          tt.style.transform = tt.__baseTransform
-            ? tt.__baseTransform + ' translate(0px, 0px)'
-            : 'translate(0px, 0px)';
-        }
+      // Update base position
+      tooltip.style.left = (mouseX + OFFSET) + 'px';
+      tooltip.style.top = (mouseY + OFFSET) + 'px';
 
-        // Only calculate bounding rect for active tooltips (this is the expensive operation)
-        const rect = tt.getBoundingClientRect();
-        let dx = 0, dy = 0;
+      // Reset translate to get accurate bounding rect
+      if (supportsTranslateProp) {
+        tooltip.style.translate = '0px 0px';
+      } else {
+        tooltip.style.transform = tooltip.__baseTransform
+          ? tooltip.__baseTransform + ' translate(0px, 0px)'
+          : 'translate(0px, 0px)';
+      }
 
-        // Right edge
-        const overRight = rect.right - (window.innerWidth - PADDING);
-        if (overRight > 0) dx -= overRight;
+      // Calculate bounding rect (only once for single tooltip)
+      const rect = tooltip.getBoundingClientRect();
+      let dx = 0, dy = 0;
 
-        // Left edge
-        const overLeft = PADDING - rect.left;
-        if (overLeft > 0) dx += overLeft;
+      // Right edge
+      const overRight = rect.right - (window.innerWidth - PADDING);
+      if (overRight > 0) dx -= overRight;
 
-        // Bottom
-        const overBottom = rect.bottom - (window.innerHeight - PADDING);
-        if (overBottom > 0) dy -= overBottom;
+      // Left edge
+      const overLeft = PADDING - rect.left;
+      if (overLeft > 0) dx += overLeft;
 
-        // Top
-        const overTop = PADDING - rect.top;
-        if (overTop > 0) dy += overTop;
+      // Bottom
+      const overBottom = rect.bottom - (window.innerHeight - PADDING);
+      if (overBottom > 0) dy -= overBottom;
 
-        // Apply correction
-        if (supportsTranslateProp) {
-          tt.style.translate = `${dx}px ${dy}px`;
-        } else {
-          tt.style.transform = (tt.__baseTransform ? tt.__baseTransform + ' ' : '')
-            + `translate(${dx}px, ${dy}px)`;
-        }
-      });
+      // Top
+      const overTop = PADDING - rect.top;
+      if (overTop > 0) dy += overTop;
 
-      // Reset translate for inactive tooltips
-      const inactive = activeTooltips.filter(tt => !tt.__isActive);
-      inactive.forEach(function (tt) {
-        if (supportsTranslateProp) {
-          tt.style.translate = '';
-        } else {
-          tt.style.transform = tt.__baseTransform || '';
-        }
-      });
+      // Apply correction
+      if (supportsTranslateProp) {
+        tooltip.style.translate = `${dx}px ${dy}px`;
+      } else {
+        tooltip.style.transform = (tooltip.__baseTransform ? tooltip.__baseTransform + ' ' : '')
+          + `translate(${dx}px, ${dy}px)`;
+      }
     }
 
     document.addEventListener('mousemove', function (e) {
@@ -184,7 +205,7 @@ const Tooltips = (() => {
       if (!rafId) {
         rafId = requestAnimationFrame(function () {
           if (pendingMouseEvent) {
-            updateTooltips(pendingMouseEvent.x, pendingMouseEvent.y);
+            updateTooltip(pendingMouseEvent.x, pendingMouseEvent.y);
             pendingMouseEvent = null;
           }
           rafId = null;
@@ -204,18 +225,18 @@ const Tooltips = (() => {
         // If we have a pending mouse event, recalculate with it
         // Otherwise use the last known position or center of viewport
         if (pendingMouseEvent) {
-          updateTooltips(pendingMouseEvent.x, pendingMouseEvent.y);
+          updateTooltip(pendingMouseEvent.x, pendingMouseEvent.y);
         } else {
           // Use center of viewport as fallback
-          updateTooltips(window.innerWidth / 2, window.innerHeight / 2);
+          updateTooltip(window.innerWidth / 2, window.innerHeight / 2);
         }
-        activeTooltips.forEach(tt => resetIfHidden(tt, supportsTranslateProp));
+        resetIfHidden(tooltip, supportsTranslateProp);
         resizeRafId = null;
       });
     });
 
     // ========================================================================
-    // WINDOW SCROLL: Reset hidden tooltips (in case of fixed/absolute contexts)
+    // WINDOW SCROLL: Reset hidden tooltip (in case of fixed/absolute contexts)
     // ========================================================================
     let scrollRafId = null;
     window.addEventListener('scroll', () => {
@@ -223,7 +244,7 @@ const Tooltips = (() => {
       if (scrollRafId) return;
       
       scrollRafId = requestAnimationFrame(() => {
-        activeTooltips.forEach(tt => resetIfHidden(tt, supportsTranslateProp));
+        resetIfHidden(tooltip, supportsTranslateProp);
         scrollRafId = null;
       });
     });
