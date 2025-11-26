@@ -165,7 +165,7 @@ const Tooltips = (() => {
     // ========================================================================
     // SETUP: Wire parents to update content and activate tooltip
     // ========================================================================
-    const parents = document.querySelectorAll('.cms_ci.is-h-companies');
+    const parents = document.querySelectorAll('[tooltip="collection-item"]');
     
     console.log(`   📍 Found ${parents.length} parent element(s)`);
     
