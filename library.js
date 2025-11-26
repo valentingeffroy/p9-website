@@ -1,14 +1,15 @@
 /**
- * COMPANIES PAGE
- * Initializes: FilterChips
+ * LIBRARY PAGE
+ * Initializes: FilterChips + Tooltips
  */
 
 // Load required modules
 //= require utils.js
 //= require filterChips.js
+//= require tooltips.js
 
 console.log('═════════════════════════════════════════════════════════════');
-console.log('🏢 COMPANIES PAGE SCRIPT LOADING');
+console.log('📚 LIBRARY PAGE SCRIPT LOADING');
 console.log('═════════════════════════════════════════════════════════════');
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -21,7 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('   ❌ Error in FilterChips.init():', e);
   }
 
+  try {
+    console.log('2️⃣  Initializing Tooltips...');
+    Tooltips.init();
+  } catch (e) {
+    console.error('   ❌ Error in Tooltips.init():', e);
+  }
+
   console.log('═════════════════════════════════════════════════════════════');
-  console.log('✨ COMPANIES PAGE INITIALIZATION COMPLETE ✨');
+  console.log('✨ LIBRARY PAGE INITIALIZATION COMPLETE ✨');
   console.log('═════════════════════════════════════════════════════════════');
 });
