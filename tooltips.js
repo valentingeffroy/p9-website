@@ -23,73 +23,64 @@ const Tooltips = (() => {
   function init() {
     console.log('🚀 Tooltips.init() called');
 
-    const tooltips = document.querySelectorAll('.h_companies-card_block');
-    
-    if (!tooltips.length) {
-      console.warn('   ⚠️  No tooltip elements found (.h_companies-card_block)');
+    const parents = document.querySelectorAll('.cms_ci.is-h-companies');
+
+    if (!parents.length) {
+      console.warn('   ⚠️  No parent elements found (.cms_ci.is-h-companies)');
       return;
     }
 
-    console.log(`   📍 Found ${tooltips.length} tooltip(s)`);
+    console.log(`   📍 Found ${parents.length} parent element(s)`);
 
     // Check if browser supports CSS translate property
     const supportsTranslateProp = typeof CSS !== 'undefined'
-      && CSS.supports 
+      && CSS.supports
       && CSS.supports('translate', '1px');
 
     console.log(`   🖥️  CSS translate support: ${supportsTranslateProp ? 'YES' : 'NO'}`);
 
     // ========================================================================
-    // SETUP: Store base transform and ensure fixed positioning
+    // SETUP: Wire each parent with its tooltip
     // ========================================================================
-    tooltips.forEach((tt, idx) => {
+    parents.forEach((parent, idx) => {
+      const tooltip = parent.querySelector('.h_companies-card_block');
+
+      if (!tooltip) {
+        console.warn(`   ⚠️  No tooltip found in parent ${idx + 1}`);
+        return;
+      }
+
       // Save original transform to avoid overwriting scale/rotate
-      const base = getComputedStyle(tt).transform;
-      tt.__baseTransform = (base && base !== 'none') ? base : '';
+      const base = getComputedStyle(tooltip).transform;
+      tooltip.__baseTransform = (base && base !== 'none') ? base : '';
 
       // Ensure fixed positioning for accurate cursor tracking
-      const pos = getComputedStyle(tt).position;
+      const pos = getComputedStyle(tooltip).position;
       if (pos !== 'fixed' && pos !== 'absolute') {
-        tt.style.position = 'fixed';
+        tooltip.style.position = 'fixed';
       }
 
       console.log(`   ✓ Tooltip ${idx + 1} initialized`);
-    });
 
-    // ========================================================================
-    // HELPER: Reset translate/transform when hidden
-    // ========================================================================
-    function resetIfHidden(tt) {
-      const cs = getComputedStyle(tt);
-      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) {
-        if (supportsTranslateProp) {
-          tt.style.translate = '';
-        } else {
-          tt.style.transform = tt.__baseTransform;
-        }
-      }
-    }
-
-    // ========================================================================
-    // MAIN: Mouse move listener for positioning
-    // ========================================================================
-    document.addEventListener('mousemove', (e) => {
-      tooltips.forEach((tt) => {
+      // ========================================================================
+      // MOUSE MOVE: Track cursor only when hovering this parent
+      // ========================================================================
+      parent.addEventListener('mousemove', (e) => {
         // Set base position (cursor + offset)
-        tt.style.left = (e.clientX + OFFSET) + 'px';
-        tt.style.top = (e.clientY + OFFSET) + 'px';
+        tooltip.style.left = (e.clientX + OFFSET) + 'px';
+        tooltip.style.top = (e.clientY + OFFSET) + 'px';
 
         // Reset translate to get accurate bounding rect
         if (supportsTranslateProp) {
-          tt.style.translate = '0px 0px';
+          tooltip.style.translate = '0px 0px';
         } else {
-          tt.style.transform = tt.__baseTransform 
-            ? tt.__baseTransform + ' translate(0px, 0px)' 
+          tooltip.style.transform = tooltip.__baseTransform
+            ? tooltip.__baseTransform + ' translate(0px, 0px)'
             : 'translate(0px, 0px)';
         }
 
         // Calculate adjustment needed
-        const rect = tt.getBoundingClientRect();
+        const rect = tooltip.getBoundingClientRect();
         let dx = 0, dy = 0;
 
         // Check right edge overflow
@@ -108,38 +99,27 @@ const Tooltips = (() => {
         const overTop = PADDING - rect.top;
         if (overTop > 0) dy += overTop;
 
-        // Apply correction only if visible
-        if (Utils.isVisible(tt)) {
-          if (supportsTranslateProp) {
-            tt.style.translate = `${dx}px ${dy}px`;
-          } else {
-            tt.style.transform = (tt.__baseTransform ? tt.__baseTransform + ' ' : '') 
-              + `translate(${dx}px, ${dy}px)`;
-          }
+        // Apply correction
+        if (supportsTranslateProp) {
+          tooltip.style.translate = `${dx}px ${dy}px`;
         } else {
-          resetIfHidden(tt);
+          tooltip.style.transform = (tooltip.__baseTransform ? tooltip.__baseTransform + ' ' : '')
+            + `translate(${dx}px, ${dy}px)`;
         }
       });
-    });
 
-    // ========================================================================
-    // WINDOW RESIZE LISTENER
-    // ========================================================================
-    window.addEventListener('resize', () => {
-      console.log('   🔄 Window resized, recalculating tooltip positions');
-      const evt = new MouseEvent('mousemove', {
-        clientX: window.innerWidth - OFFSET - PADDING,
-        clientY: window.innerHeight - OFFSET - PADDING,
+      // ========================================================================
+      // MOUSE LEAVE: Reset tooltip position
+      // ========================================================================
+      parent.addEventListener('mouseleave', () => {
+        if (supportsTranslateProp) {
+          tooltip.style.translate = '';
+        } else {
+          tooltip.style.transform = tooltip.__baseTransform;
+        }
+        tooltip.style.left = '';
+        tooltip.style.top = '';
       });
-      document.dispatchEvent(evt);
-      tooltips.forEach(resetIfHidden);
-    });
-
-    // ========================================================================
-    // SCROLL LISTENER
-    // ========================================================================
-    window.addEventListener('scroll', () => {
-      tooltips.forEach(resetIfHidden);
     });
 
     console.log('✅ Tooltips initialized');
