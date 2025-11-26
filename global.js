@@ -23,6 +23,7 @@ const GlobalSite = (() => {
 
     // Selectors
     const TOGGLE_BTN = '.nav_cta-block';
+    const CLOSE_BTN = '.nav_cta-block-close';
     const PANEL = '.navbar_menu-wrapper-side';
     const LINKS = '.navbar_link';
     const LOGO = '.navbar_branding-logo';
@@ -38,15 +39,19 @@ const GlobalSite = (() => {
       return;
     }
 
+    // Create timeline - using fromTo to avoid issues with reverse
     const tl = gsap.timeline({
       paused: true,
       defaults: { ease: 'power3.out' }
     });
 
+    // Set initial state
+    gsap.set(linkEls, { yPercent: 120, autoAlpha: 0 });
+
     // Smooth reveal: slide up + fade, top-to-bottom, total stagger ~1s
-    tl.from(linkEls, {
-      yPercent: 120,
-      autoAlpha: 0,
+    tl.to(linkEls, {
+      yPercent: 0,
+      autoAlpha: 1,
       duration: 0.225,                 // per-item
       stagger: { amount: 0.5, from: 'start' } // ~1s total across all items
     }, 0);
@@ -70,34 +75,97 @@ const GlobalSite = (() => {
       }
     };
 
-    // Click handler (prevent double-bind)
-    $(document).off('click.menuAnimation', TOGGLE_BTN).on('click.menuAnimation', TOGGLE_BTN, function () {
-      const $btn = $(this);
+    // Function to open menu
+    const openMenu = () => {
+      const $btn = $(TOGGLE_BTN);
+      
+      // Reset timeline to start
+      tl.progress(0);
+      
+      // Set initial state for links
+      gsap.set(linkEls, { yPercent: 120, autoAlpha: 0 });
+      
+      // Slide panel in
+      openPanel();
+      
+      // Play link reveal
+      tl.play();
+      
+      $btn.addClass('clicked');
+    };
+
+    // Function to close menu
+    const closeMenu = () => {
+      const $btn = $(TOGGLE_BTN);
+      
+      // Reverse link reveal smoothly
+      tl.eventCallback('onReverseComplete', () => {
+        // After links hide, slide panel out
+        closePanel();
+        $btn.removeClass('clicked');
+        
+        // Reset callback to avoid duplicates
+        tl.eventCallback('onReverseComplete', null);
+        
+        // Reset timeline progress for next opening
+        tl.progress(0);
+        gsap.set(linkEls, { yPercent: 120, autoAlpha: 0 });
+      });
+      
+      tl.reverse();
+    };
+
+    // Toggle function for toggle button
+    const toggleMenu = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
       // Debounce rapid clicks while animating
       if (gsap.isTweening(PANEL)) return;
 
-      $btn.toggleClass('clicked');
-      const opening = $btn.hasClass('clicked');
+      const $btn = $(TOGGLE_BTN);
+      const isOpen = $btn.hasClass('clicked');
 
-      if (opening) {
-        // 1) Slide panel in
-        openPanel();
-
-        // 2) Play link reveal from start (no global delay)
-        tl.progress(0).play();
+      if (isOpen) {
+        closeMenu();
       } else {
-        // 1) Reverse link reveal smoothly
-        tl.eventCallback('onReverseComplete', () => {
-          // 2) After links hide, slide panel out
-          closePanel();
-
-          // 3) Reset callbacks to avoid duplicates
-          tl.eventCallback('onReverseComplete', null);
-        });
-
-        tl.reverse();
+        openMenu();
       }
+    };
+
+    // Click handler on toggle button
+    $(document).off('click.menuAnimation', TOGGLE_BTN).on('click.menuAnimation', TOGGLE_BTN, toggleMenu);
+
+    // Click handler on close button
+    $(document).off('click.menuAnimation', CLOSE_BTN).on('click.menuAnimation', CLOSE_BTN, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const $btn = $(TOGGLE_BTN);
+      if ($btn.hasClass('clicked')) {
+        closeMenu();
+      }
+    });
+
+    // Close menu when clicking outside
+    $(document).off('click.menuOutside').on('click.menuOutside', (e) => {
+      const $btn = $(TOGGLE_BTN);
+      const isOpen = $btn.hasClass('clicked');
+      
+      if (!isOpen) return;
+
+      const $target = $(e.target);
+      
+      // Don't close if clicking on the toggle button, close button, or inside the panel
+      if (
+        $target.closest(TOGGLE_BTN).length > 0 ||
+        $target.closest(CLOSE_BTN).length > 0 ||
+        $target.closest(PANEL).length > 0
+      ) {
+        return;
+      }
+
+      closeMenu();
     });
 
     // Keep behavior in sync when viewport crosses breakpoint
