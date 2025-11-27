@@ -4,13 +4,16 @@
 
 /* Lightbox Container */
 .video-lightbox {
-  display: none;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
   /* Add your lightbox overlay styles here */
 }
 
 .video-lightbox.is-open {
-  display: block;
-  /* Add your lightbox open styles here */
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ============================================
