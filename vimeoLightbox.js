@@ -235,7 +235,12 @@ const VimeoLightbox = (() => {
     if (isOpen) return;
 
     isOpen = true;
-    lightbox.classList.add('is-open');
+    
+    // Trigger opacity transition by adding is-open class
+    // Use requestAnimationFrame to ensure the display change happens first
+    requestAnimationFrame(() => {
+      lightbox.classList.add('is-open');
+    });
     
     // Show last active video (or first if none was played)
     if (videoContainers.length > 0) {
@@ -253,6 +258,8 @@ const VimeoLightbox = (() => {
     if (!isOpen) return;
 
     isOpen = false;
+    
+    // Trigger opacity transition by removing is-open class
     lightbox.classList.remove('is-open');
 
     // Pause active video
@@ -260,12 +267,15 @@ const VimeoLightbox = (() => {
       players[activeIndex].pause();
     }
 
-    // Hide all videos
-    videoContainers.forEach(container => {
-      container.style.display = 'none';
-    });
-
-    activeIndex = -1;
+    // Hide all videos after transition completes
+    setTimeout(() => {
+      if (!isOpen) {
+        videoContainers.forEach(container => {
+          container.style.display = 'none';
+        });
+        activeIndex = -1;
+      }
+    }, 300); // Match CSS transition duration
   }
 
   /**
@@ -385,8 +395,8 @@ const VimeoLightbox = (() => {
       }
     });
 
-    // Handle close buttons
-    const closeButtons = document.querySelectorAll('[data-vimeo-lightbox-control="close"]');
+    // Handle close buttons (both old and new selectors)
+    const closeButtons = document.querySelectorAll('[data-vimeo-lightbox-control="close"], [lightbox="close"]');
     closeButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
