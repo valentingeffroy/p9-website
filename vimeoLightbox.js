@@ -13,6 +13,7 @@ const VimeoLightbox = (() => {
   let videoContainers = [];
   let players = []; // Array to store Plyr instances
   let activeIndex = -1;
+  let lastActiveIndex = 0; // Remember last active video for reopening
   let isOpen = false;
   let plyrLoadPromise = null;
 
@@ -193,6 +194,7 @@ const VimeoLightbox = (() => {
       
       // Update active index
       activeIndex = index;
+      lastActiveIndex = index; // Remember this as the last active video
       
       // Update thumbnails
       updateThumbnails(activeIndex);
@@ -227,7 +229,7 @@ const VimeoLightbox = (() => {
   }
 
   /**
-   * Open the lightbox and show first video
+   * Open the lightbox and show last active video (or first if none)
    */
   async function openLightbox() {
     if (isOpen) return;
@@ -235,9 +237,12 @@ const VimeoLightbox = (() => {
     isOpen = true;
     lightbox.classList.add('is-open');
     
-    // Show first video (index 0)
+    // Show last active video (or first if none was played)
     if (videoContainers.length > 0) {
-      await switchVideo(0);
+      const videoToShow = lastActiveIndex >= 0 && lastActiveIndex < videoContainers.length 
+        ? lastActiveIndex 
+        : 0;
+      await switchVideo(videoToShow);
     }
   }
 
@@ -401,7 +406,11 @@ const VimeoLightbox = (() => {
     if (lightbox.classList.contains('is-open')) {
       isOpen = true;
       if (videoContainers.length > 0) {
-        await switchVideo(0);
+        // Use last active index if available, otherwise start with first video
+        const videoToShow = lastActiveIndex >= 0 && lastActiveIndex < videoContainers.length 
+          ? lastActiveIndex 
+          : 0;
+        await switchVideo(videoToShow);
       }
     }
 
