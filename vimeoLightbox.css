@@ -60,16 +60,12 @@
 .plyr__control--overlaid {
     -webkit-backdrop-filter: blur(1em);
     backdrop-filter: blur(1em);
-    background-color: #64646433;
-    border-radius: 50%;
+    background-color: #64646433 !important;
+    display: flex !important;
     justify-content: center;
     align-items: center;
-    width: 6em;
-    height: 6em;
-    transition: opacity .3s 
-    linear;
-    display: flex;
-    position: relative;
+    width: 6rem !important;
+    height: 6rem !important;
 }
 
 /* ============================================
