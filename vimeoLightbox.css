@@ -68,6 +68,10 @@
     height: 6rem !important;
 }
 
+.plyr__control svg {
+    width: 50% !important;
+    height: 50% !important;
+} 
 /* ============================================
    RESPONSIVE SIZING (if needed)
    ============================================ */
