@@ -264,6 +264,40 @@ const VimeoLightbox = (() => {
   }
 
   /**
+   * Preload Vimeo iframes by making them load in background
+   * This makes switching between videos smoother
+   */
+  function preloadVimeoIframes() {
+    console.log('   📥 Preloading Vimeo iframes...');
+    
+    videoContainers.forEach((container, index) => {
+      const iframe = container.querySelector('iframe');
+      if (iframe) {
+        // Force iframe to load by temporarily making it visible
+        const originalDisplay = container.style.display;
+        container.style.display = 'block';
+        container.style.visibility = 'hidden';
+        container.style.position = 'absolute';
+        container.style.left = '-9999px';
+        container.style.width = '1px';
+        container.style.height = '1px';
+        
+        // Restore after a short delay (iframe will continue loading)
+        setTimeout(() => {
+          container.style.display = originalDisplay;
+          container.style.visibility = '';
+          container.style.position = '';
+          container.style.left = '';
+          container.style.width = '';
+          container.style.height = '';
+        }, 100);
+        
+        console.log(`   ✓ Preloading iframe ${index}`);
+      }
+    });
+  }
+
+  /**
    * Initialize the lightbox system
    */
   async function init() {
@@ -370,6 +404,12 @@ const VimeoLightbox = (() => {
         await switchVideo(0);
       }
     }
+
+    // Preload all Vimeo iframes in the background after a short delay
+    // This makes switching between videos smoother
+    setTimeout(() => {
+      preloadVimeoIframes();
+    }, 500);
 
     console.log('✅ VimeoLightbox initialized');
   }
