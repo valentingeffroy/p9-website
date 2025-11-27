@@ -172,11 +172,14 @@ const VimeoLightbox = (() => {
       updateThumbnails(activeIndex);
       
       // Auto-play the video
-      if (player) {
+      if (player && typeof player.play === 'function') {
         setTimeout(() => {
-          player.play().catch(err => {
-            console.warn('Auto-play prevented:', err);
-          });
+          const playPromise = player.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(err => {
+              console.warn('Auto-play prevented:', err);
+            });
+          }
         }, 100);
       }
     }
