@@ -1,0 +1,318 @@
+/* ============================================
+   VIMEO LIGHTBOX - STYLING & ANIMATIONS
+   ============================================ */
+
+/* ============================================
+   PLAYER & CONTAINER STYLING
+   ============================================ */
+
+.vimeo-lightbox__player {
+  transition: all 0.3s cubic-bezier(0.625, 0.05, 0, 1);
+}
+
+.vimeo-lightbox__player {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.9) rotate(0.001deg);
+}
+
+.vimeo-lightbox.is-activated .vimeo-lightbox__player {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) rotate(0.001deg);
+}
+
+/* Dark Background */
+.vimeo-lightbox__bg {
+  transition: all 0.3s cubic-bezier(0.625, 0.05, 0, 1);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.vimeo-lightbox.is-loading .vimeo-lightbox__bg,
+.vimeo-lightbox.is-activated .vimeo-lightbox__bg {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Content Wrapper */
+.vimeo_cw {
+  transition: all 0.5s cubic-bezier(0.625, 0.05, 0, 1);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.vimeo-lightbox.is-loading .vimeo_cw,
+.vimeo-lightbox.is-activated .vimeo_cw {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Close Button */
+.vimeo-lightbox__close {
+  transition: all 0.5s cubic-bezier(0.625, 0.05, 0, 1);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.vimeo-lightbox.is-activated .vimeo-lightbox__close {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================
+   SIZING
+   ============================================ */
+
+/* Cover Mode */
+.vimeo-lightbox[data-vimeo-update-size="cover"] .vimeo-lightbox__calc-wrap {
+  height: 100%;
+}
+
+.vimeo-lightbox[data-vimeo-update-size="cover"] [data-vimeo-lightbox-player] {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
+}
+
+/* ============================================
+   PLAYER ELEMENTS
+   ============================================ */
+
+/* Placeholder Image */
+.vimeo-lightbox.is-loaded .vimeo-lightbox__placeholder {
+  opacity: 0;
+}
+
+/* Dark Overlay */
+.vimeo-lightbox .vimeo-lightbox__dark {
+  opacity: 0;
+}
+
+.vimeo-lightbox:not(.is-playing) .vimeo-lightbox__dark {
+  opacity: 0.33;
+}
+
+.vimeo-lightbox.is-activated:not(.is-playing) .vimeo-lightbox__dark {
+  opacity: 0.33;
+}
+
+.vimeo-lightbox.is-activated.is-loaded .vimeo-lightbox__dark {
+  opacity: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .vimeo-lightbox.is-hover:hover .vimeo-lightbox__dark {
+    opacity: 0.33 !important;
+  }
+}
+
+/* ============================================
+   PLAYBACK CONTROLS
+   ============================================ */
+
+/* Pause Control */
+.vimeo-lightbox .vimeo-lightbox__pause {
+  display: none;
+}
+
+.vimeo-lightbox.is-playing .vimeo-lightbox__pause {
+  display: flex;
+}
+
+.vimeo-lightbox .vimeo-lightbox__pause .vimeo-lightbox__btn {
+  opacity: 0;
+}
+
+.vimeo-lightbox.is-activated:not(.is-playing) .vimeo-lightbox__pause .vimeo-lightbox__btn,
+.vimeo-lightbox.is-activated.is-hover:hover .vimeo-lightbox__pause .vimeo-lightbox__btn {
+  opacity: 1;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .vimeo-lightbox.is-activated.is-playing .vimeo-lightbox__pause .vimeo-lightbox__btn {
+    opacity: 0 !important;
+  }
+}
+
+/* Play Control */
+.vimeo-lightbox.is-playing .vimeo-lightbox__play {
+  opacity: 0;
+}
+
+/* Loading Indicator */
+.vimeo-lightbox .vimeo-lightbox__loading {
+  opacity: 0;
+}
+
+.vimeo-lightbox.is-playing .vimeo-lightbox__loading {
+  opacity: 1;
+}
+
+.vimeo-lightbox.is-playing.is-loaded .vimeo-lightbox__loading {
+  opacity: 0;
+}
+
+/* ============================================
+   INTERFACE & CONTROLS
+   ============================================ */
+
+.vimeo-lightbox .vimeo-lightbox__interface {
+  opacity: 0;
+}
+
+.vimeo-lightbox:not(.is-activated):not(.is-playing) .vimeo-lightbox__interface {
+  opacity: 1;
+}
+
+.vimeo-lightbox .vimeo-lightbox__interface * {
+  pointer-events: all;
+}
+
+.vimeo-lightbox.is-activated:not(.is-playing) .vimeo-lightbox__interface,
+.vimeo-lightbox.is-activated.is-hover:hover .vimeo-lightbox__interface {
+  opacity: 1;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .vimeo-lightbox.is-activated.is-playing .vimeo-lightbox__interface {
+    opacity: 0 !important;
+  }
+}
+
+/* ============================================
+   TIMELINE & PROGRESS
+   ============================================ */
+
+.vimeo-lightbox {
+  --timeline-rounded-corners: 1.5em;
+  --timeline-dot-height: 0.75em;
+  --timeline-dot-color: #FF4C24;
+  --progress-bg: rgba(239, 238, 236, 0.2);
+  --progress-fill-bg: #FF4C24;
+  --progress-height: 0.2em;
+}
+
+/* Progress Bar (Static) */
+.vimeo-lightbox progress::-webkit-progress-bar {
+  border-radius: var(--timeline-rounded-corners);
+  background-color: var(--progress-bg);
+  box-shadow: 0;
+}
+
+.vimeo-lightbox progress::-webkit-progress-value {
+  background: var(--progress-fill-bg);
+}
+
+.vimeo-lightbox progress::-moz-progress-bar {
+  border-radius: var(--timeline-rounded-corners);
+  background: var(--progress-fill-bg);
+  box-shadow: 0;
+}
+
+.vimeo-lightbox progress::-ms-fill {
+  border-radius: var(--timeline-rounded-corners);
+}
+
+/* Range Input (Interactive Timeline) */
+.vimeo-lightbox [type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+}
+
+.vimeo-lightbox [type="range"]:focus {
+  outline: none;
+}
+
+.vimeo-lightbox [type="range"]::-ms-track {
+  width: 100%;
+  cursor: pointer;
+  background-color: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+.vimeo-lightbox [type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: var(--progress-height);
+  cursor: pointer;
+  background-color: transparent;
+  border-radius: var(--timeline-rounded-corners);
+  border-color: transparent;
+  color: transparent;
+}
+
+.vimeo-lightbox [type="range"]::-webkit-slider-thumb {
+  box-shadow: 0;
+  height: var(--timeline-dot-height);
+  width: var(--timeline-dot-height);
+  border-radius: var(--timeline-rounded-corners);
+  background-color: var(--timeline-dot-color);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: calc((var(--progress-height) / 2) - (var(--timeline-dot-height) / 2));
+}
+
+.vimeo-lightbox [type="range"]::-webkit-slider-runnable-track,
+.vimeo-lightbox [type="range"]:focus::-webkit-slider-runnable-track {
+  background-color: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+.vimeo-lightbox [type="range"]::-moz-range-track {
+  width: 100%;
+  height: var(--progress-height);
+  cursor: pointer;
+  background: var(--progress-bg);
+  border-radius: var(--timeline-rounded-corners);
+  border: 0;
+  overflow: hidden;
+  opacity: 1 !important;
+}
+
+.vimeo-lightbox [type="range"]::-moz-range-thumb {
+  box-shadow: 0;
+  border: 0;
+  height: var(--timeline-dot-height);
+  width: var(--timeline-dot-height);
+  border-radius: var(--timeline-rounded-corners);
+  background: var(--timeline-dot-color);
+  cursor: pointer;
+}
+
+/* ============================================
+   ICON TOGGLES (MUTE & FULLSCREEN)
+   ============================================ */
+
+/* Mute Icon Toggle */
+.vimeo-lightbox .vimeo-lightbox__mute svg:nth-child(2),
+.vimeo-lightbox.is-muted .vimeo-lightbox__mute svg:nth-child(1) {
+  display: none;
+}
+
+.vimeo-lightbox .vimeo-lightbox__mute svg:nth-child(1),
+.vimeo-lightbox.is-muted .vimeo-lightbox__mute svg:nth-child(2) {
+  display: block;
+}
+
+/* Fullscreen Icon Toggle */
+.vimeo-lightbox .vimeo-lightbox__fullscreen svg:nth-child(2),
+.vimeo-lightbox.is-fullscreen .vimeo-lightbox__fullscreen svg:nth-child(1) {
+  display: none;
+}
+
+.vimeo-lightbox .vimeo-lightbox__fullscreen svg:nth-child(1),
+.vimeo-lightbox.is-fullscreen .vimeo-lightbox__fullscreen svg:nth-child(2) {
+  display: block;
+}
+
+/* ============================================
+   TEAM VIDEOS LIST
+   ============================================ */
+
+.team-videos_ci.w-dyn-item.video-active {
+  opacity: 1;
+}

@@ -77,6 +77,34 @@ const VimeoLightbox = (() => {
   }
 
   // ========================================================================
+  // STATE HELPERS
+  // ========================================================================
+
+  /**
+   * Add class and keep data attribute in sync
+   */
+  function setState(element, className, value) {
+    const dataAttr = `data-vimeo-${className.replace('is-', '')}`;
+    if (value) {
+      element.classList.add(className);
+      element.setAttribute(dataAttr, 'true');
+    } else {
+      element.classList.remove(className);
+      element.setAttribute(dataAttr, 'false');
+    }
+  }
+
+  /**
+   * Toggle class and keep data attribute in sync
+   */
+  function toggleState(element, className) {
+    const dataAttr = `data-vimeo-${className.replace('is-', '')}`;
+    const isActive = element.classList.toggle(className);
+    element.setAttribute(dataAttr, isActive ? 'true' : 'false');
+    return isActive;
+  }
+
+  // ========================================================================
   // PUBLIC API
   // ========================================================================
 
@@ -110,7 +138,7 @@ const VimeoLightbox = (() => {
     let player = null;
     let currentVideoID = null;
     let videoAspectRatio = null;
-    let globalMuted = lightbox.getAttribute('data-vimeo-muted') === 'true';
+    let globalMuted = lightbox.getAttribute('data-vimeo-muted') === 'true' || lightbox.classList.contains('is-muted');
     const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
     const playedOnce = new Set();
 
@@ -152,10 +180,10 @@ const VimeoLightbox = (() => {
 
     function closeLightbox() {
       console.log('   🔴 Closing lightbox');
-      lightbox.setAttribute('data-vimeo-activated', 'false');
+      setState(lightbox, 'is-activated', false);
       if (player) {
         player.pause();
-        lightbox.setAttribute('data-vimeo-playing', 'false');
+        setState(lightbox, 'is-playing', false);
       }
     }
 
@@ -194,16 +222,16 @@ const VimeoLightbox = (() => {
       console.log('   🎬 Setting up player events');
 
       player.on('play', () => {
-        lightbox.setAttribute('data-vimeo-loaded', 'true');
-        lightbox.setAttribute('data-vimeo-playing', 'true');
+        setState(lightbox, 'is-loaded', true);
+        setState(lightbox, 'is-playing', true);
       });
 
       player.on('ended', () => {
-        lightbox.setAttribute('data-vimeo-playing', 'false');
+        setState(lightbox, 'is-playing', false);
       });
 
       player.on('pause', () => {
-        lightbox.setAttribute('data-vimeo-playing', 'false');
+        setState(lightbox, 'is-playing', false);
       });
 
       refreshDurationAndTimeline();
@@ -232,10 +260,10 @@ const VimeoLightbox = (() => {
       // Hover controls
       let hoverTimer;
       playerContainer.addEventListener('mousemove', () => {
-        lightbox.setAttribute('data-vimeo-hover', 'true');
+        setState(lightbox, 'is-hover', true);
         clearTimeout(hoverTimer);
         hoverTimer = setTimeout(() => {
-          lightbox.setAttribute('data-vimeo-hover', 'false');
+          setState(lightbox, 'is-hover', false);
         }, 3000);
       });
 
@@ -249,18 +277,18 @@ const VimeoLightbox = (() => {
 
         fsBtn.addEventListener('click', () => {
           if (isFS()) {
-            lightbox.setAttribute('data-vimeo-fullscreen', 'false');
+            setState(lightbox, 'is-fullscreen', false);
             (document.exitFullscreen || document.webkitExitFullscreen).call(document);
           } else {
-            lightbox.setAttribute('data-vimeo-fullscreen', 'true');
+            setState(lightbox, 'is-fullscreen', true);
             (playerContainer.requestFullscreen || playerContainer.webkitRequestFullscreen).call(playerContainer);
           }
         });
 
         ['fullscreenchange', 'webkitfullscreenchange'].forEach((evt) => {
           document.addEventListener(evt, () => {
-            lightbox.setAttribute('data-vimeo-fullscreen',
-              (document.fullscreenElement || document.webkitFullscreenElement) ? 'true' : 'false'
+            setState(lightbox, 'is-fullscreen',
+              (document.fullscreenElement || document.webkitFullscreenElement) ? true : false
             );
           });
         });
@@ -319,12 +347,12 @@ const VimeoLightbox = (() => {
           await player.setCurrentTime(0);
         } catch (_) {}
         await player.setVolume(globalMuted ? 0 : 1);
-        lightbox.setAttribute('data-vimeo-playing', 'true');
+        setState(lightbox, 'is-playing', true);
         return player.play();
       }
 
-      lightbox.setAttribute('data-vimeo-loaded', 'false');
-      lightbox.setAttribute('data-vimeo-playing', 'false');
+      setState(lightbox, 'is-loaded', false);
+      setState(lightbox, 'is-playing', false);
 
       try {
         await player.pause();
@@ -333,11 +361,11 @@ const VimeoLightbox = (() => {
 
         await refreshDurationAndTimeline();
         await runSizing();
-        lightbox.setAttribute('data-vimeo-loaded', 'true');
+        setState(lightbox, 'is-loaded', true);
 
         if (forceAutoplay || !isTouch || playedOnce.has(currentVideoID)) {
           await player.setVolume(globalMuted ? 0 : 1);
-          lightbox.setAttribute('data-vimeo-playing', 'true');
+          setState(lightbox, 'is-playing', true);
           await player.play();
           playedOnce.add(currentVideoID);
         }
@@ -360,8 +388,8 @@ const VimeoLightbox = (() => {
 
       console.log(`   🎬 Opening lightbox with video: ${vid}`);
 
-      lightbox.setAttribute('data-vimeo-activated', 'loading');
-      lightbox.setAttribute('data-vimeo-loaded', 'false');
+      setState(lightbox, 'is-loading', true);
+      setState(lightbox, 'is-loaded', false);
 
       if (player && vid !== currentVideoID) {
         await player.pause();
@@ -378,7 +406,7 @@ const VimeoLightbox = (() => {
         iframe = newIframe;
         player = null;
         currentVideoID = null;
-        lightbox.setAttribute('data-vimeo-playing', 'false');
+        setState(lightbox, 'is-playing', false);
       }
 
       if (placeholderBtn && placeholder) {
@@ -394,7 +422,7 @@ const VimeoLightbox = (() => {
           await loadVimeoSDK();
         } catch (error) {
           console.error('   ❌ Failed to load Vimeo SDK:', error);
-          lightbox.setAttribute('data-vimeo-activated', 'false');
+          setState(lightbox, 'is-loading', false);
           return;
         }
 
@@ -402,7 +430,7 @@ const VimeoLightbox = (() => {
         
         if (typeof window.Vimeo === 'undefined' || !window.Vimeo.Player) {
           console.error('   ❌ Vimeo SDK not available after loading');
-          lightbox.setAttribute('data-vimeo-activated', 'false');
+          setState(lightbox, 'is-loading', false);
           return;
         }
 
@@ -412,11 +440,12 @@ const VimeoLightbox = (() => {
         await runSizing();
       }
 
-      lightbox.setAttribute('data-vimeo-activated', 'true');
+      setState(lightbox, 'is-activated', true);
+      setState(lightbox, 'is-loading', false);
 
       if (forceAutoplay || !isTouch || playedOnce.has(currentVideoID)) {
         player.setVolume(globalMuted ? 0 : 1).then(() => {
-          lightbox.setAttribute('data-vimeo-playing', 'true');
+          setState(lightbox, 'is-playing', true);
           setTimeout(() => player.play(), 50);
           playedOnce.add(currentVideoID);
         });
@@ -443,7 +472,7 @@ const VimeoLightbox = (() => {
       muteBtn.addEventListener('click', () => {
         globalMuted = !globalMuted;
         player.setVolume(globalMuted ? 0 : 1).then(() => {
-          lightbox.setAttribute('data-vimeo-muted', globalMuted ? 'true' : 'false');
+          setState(lightbox, 'is-muted', globalMuted);
         });
       });
     }
