@@ -1,575 +1,331 @@
 /**
- * VIMEO LIGHTBOX MODULE
- * Advanced Vimeo player with lightbox, playlist support, and controls
- * Features: play/pause, mute, timeline, fullscreen, responsive sizing
+ * VIMEO LIGHTBOX MODULE WITH PLYR
+ * Simple tab-based system for Vimeo videos
+ * Plyr is loaded automatically if not already present
  */
 
 const VimeoLightbox = (() => {
   console.log('📦 VimeoLightbox module loading...');
 
-  // ========================================================================
-  // SDK LOADER
-  // ========================================================================
-
-  let vimeoSDKPromise = null;
+  // State
+  let lightbox = null;
+  let thumbnails = [];
+  let videoContainers = [];
+  let players = []; // Array to store Plyr instances
+  let activeIndex = -1;
+  let isOpen = false;
+  let plyrLoadPromise = null;
 
   /**
-   * Load Vimeo SDK dynamically if not already loaded
-   * @returns {Promise<void>} Resolves when SDK is ready
+   * Load Plyr CSS and JS dynamically if not already loaded
+   * @returns {Promise<void>} Resolves when Plyr is ready
    */
-  function loadVimeoSDK() {
+  function loadPlyr() {
     // Return cached promise if already loading/loaded
-    if (vimeoSDKPromise) {
-      return vimeoSDKPromise;
+    if (plyrLoadPromise) {
+      return plyrLoadPromise;
     }
 
-    // Check if SDK is already loaded
-    if (typeof window.Vimeo !== 'undefined' && window.Vimeo.Player) {
-      console.log('   ✓ Vimeo SDK already loaded');
-      vimeoSDKPromise = Promise.resolve();
-      return vimeoSDKPromise;
+    // Check if Plyr is already loaded
+    if (typeof Plyr !== 'undefined') {
+      console.log('   ✓ Plyr already loaded');
+      plyrLoadPromise = Promise.resolve();
+      return plyrLoadPromise;
     }
 
-    console.log('   📥 Loading Vimeo SDK...');
+    console.log('   📥 Loading Plyr...');
 
-    // Create new promise to load SDK
-    vimeoSDKPromise = new Promise((resolve, reject) => {
-      // Check if script is already being loaded
-      const existingScript = document.querySelector('script[src="https://player.vimeo.com/api/player.js"]');
-      if (existingScript) {
-        // Wait for existing script to load
-        existingScript.addEventListener('load', () => {
-          if (typeof window.Vimeo !== 'undefined' && window.Vimeo.Player) {
-            console.log('   ✓ Vimeo SDK loaded (existing script)');
-            resolve();
-          } else {
-            reject(new Error('Vimeo SDK failed to load'));
-          }
-        });
-        existingScript.addEventListener('error', () => {
-          reject(new Error('Vimeo SDK script failed to load'));
-        });
-        return;
-      }
+    // Create promise to load Plyr
+    plyrLoadPromise = new Promise((resolve, reject) => {
+      // Load CSS first
+      const cssLink = document.createElement('link');
+      cssLink.rel = 'stylesheet';
+      cssLink.href = 'https://cdn.plyr.io/3.8.3/plyr.css';
+      document.head.appendChild(cssLink);
 
-      // Create and append script tag
+      // Load JS
       const script = document.createElement('script');
-      script.src = 'https://player.vimeo.com/api/player.js';
+      script.src = 'https://cdn.plyr.io/3.8.3/plyr.polyfilled.js';
       script.async = true;
 
       script.addEventListener('load', () => {
-        if (typeof window.Vimeo !== 'undefined' && window.Vimeo.Player) {
-          console.log('   ✓ Vimeo SDK loaded successfully');
+        if (typeof Plyr !== 'undefined') {
+          console.log('   ✓ Plyr loaded successfully');
           resolve();
         } else {
-          reject(new Error('Vimeo SDK failed to initialize'));
+          reject(new Error('Plyr failed to initialize'));
         }
       });
 
       script.addEventListener('error', () => {
-        reject(new Error('Failed to load Vimeo SDK script'));
+        reject(new Error('Failed to load Plyr script'));
       });
 
       document.head.appendChild(script);
     });
 
-    return vimeoSDKPromise;
+    return plyrLoadPromise;
   }
 
-  // ========================================================================
-  // STATE HELPERS
-  // ========================================================================
-
   /**
-   * Add class and keep data attribute in sync
+   * Initialize Plyr for a specific video by index
+   * @param {number} index - Index of the video to initialize
    */
-  function setState(element, className, value) {
-    const dataAttr = `data-vimeo-${className.replace('is-', '')}`;
-    if (value) {
-      element.classList.add(className);
-      element.setAttribute(dataAttr, 'true');
-    } else {
-      element.classList.remove(className);
-      element.setAttribute(dataAttr, 'false');
+  async function initPlyrForVideo(index) {
+    if (players[index]) {
+      // Already initialized
+      return players[index];
     }
+
+    const videoContainer = videoContainers[index];
+    if (!videoContainer) return null;
+
+    const iframe = videoContainer.querySelector('iframe');
+    if (!iframe) return null;
+
+    // Ensure Plyr is loaded
+    try {
+      await loadPlyr();
+    } catch (error) {
+      console.error('Failed to load Plyr:', error);
+      return null;
+    }
+
+    // Check if Plyr is available
+    if (typeof Plyr === 'undefined') {
+      console.warn('Plyr is not available');
+      return null;
+    }
+
+    // Initialize Plyr for this iframe
+    const player = new Plyr(iframe, {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+      settings: [],
+      ratio: null, // Responsive
+    });
+
+    players[index] = player;
+    console.log(`   ✓ Plyr initialized for video ${index}`);
+    return player;
   }
 
   /**
-   * Toggle class and keep data attribute in sync
+   * Update thumbnail opacity based on active index
+   * @param {number} activeIndex - Index of the active thumbnail
    */
-  function toggleState(element, className) {
-    const dataAttr = `data-vimeo-${className.replace('is-', '')}`;
-    const isActive = element.classList.toggle(className);
-    element.setAttribute(dataAttr, isActive ? 'true' : 'false');
-    return isActive;
+  function updateThumbnails(activeIndex) {
+    thumbnails.forEach((thumb, index) => {
+      const collectionItem = thumb.closest('.video-lightbox_collection-item');
+      if (collectionItem) {
+        if (index === activeIndex) {
+          collectionItem.classList.add('is-active');
+          collectionItem.style.opacity = '1';
+        } else {
+          collectionItem.classList.remove('is-active');
+          collectionItem.style.opacity = '0.4';
+        }
+      }
+    });
   }
 
-  // ========================================================================
-  // PUBLIC API
-  // ========================================================================
-
   /**
-   * Initialize Vimeo lightbox system
+   * Switch to a video by index
+   * @param {number} index - Index of the video to show
    */
-  function init() {
-    console.log('🚀 VimeoLightbox.init() called');
-
-    const lightbox = document.querySelector('[data-vimeo-lightbox-init]');
-    if (!lightbox) {
-      console.warn('   ⚠️  No lightbox container found ([data-vimeo-lightbox-init])');
+  async function switchVideo(index) {
+    // Check if already active
+    if (index === activeIndex) {
       return;
     }
 
-    console.log('   ✓ Lightbox container found');
-
-    // ========================================================================
-    // STATE & CONFIGURATION
-    // ========================================================================
-
-    const openButtonsAll = document.querySelectorAll('[data-vimeo-lightbox-control="open"]');
-    const closeButtons = document.querySelectorAll('[data-vimeo-lightbox-control="close"]');
-
-    let iframe = lightbox.querySelector('iframe');
-    const placeholder = lightbox.querySelector('.vimeo-lightbox__placeholder');
-    const calcEl = lightbox.querySelector('.vimeo-lightbox__calc');
-    const wrapEl = lightbox.querySelector('.vimeo-lightbox__calc-wrap');
-    const playerContainer = lightbox.querySelector('[data-vimeo-lightbox-player]');
-
-    let player = null;
-    let currentVideoID = null;
-    let videoAspectRatio = null;
-    let globalMuted = lightbox.getAttribute('data-vimeo-muted') === 'true' || lightbox.classList.contains('is-muted');
-    const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-    const playedOnce = new Set();
-
-    console.log(`   📱 Touch device: ${isTouch ? 'YES' : 'NO'}`);
-    console.log(`   🔇 Global muted: ${globalMuted ? 'YES' : 'NO'}`);
-
-    // ========================================================================
-    // LAYOUT HELPERS
-    // ========================================================================
-
-    function clampWrapSize(ar) {
-      const w = calcEl.offsetWidth;
-      const h = calcEl.offsetHeight;
-      wrapEl.style.maxWidth = Math.min(w, h / ar) + 'px';
+    // Validate index
+    if (index < 0 || index >= videoContainers.length) {
+      console.warn(`Invalid video index: ${index}`);
+      return;
     }
 
-    function adjustCoverSizing() {
-      if (!videoAspectRatio) return;
-      const cH = playerContainer.offsetHeight;
-      const cW = playerContainer.offsetWidth;
-      const r = cH / cW;
-      const wEl = lightbox.querySelector('.vimeo-lightbox__iframe');
-      if (r > videoAspectRatio) {
-        wEl.style.width = (r / videoAspectRatio * 100) + '%';
-        wEl.style.height = '100%';
-      } else {
-        wEl.style.height = (videoAspectRatio / r * 100) + '%';
-        wEl.style.width = '100%';
-      }
-    }
-
-    function markActive(btn) {
-      document.querySelectorAll('.team-videos_ci.video-active').forEach(el => {
-        el.classList.remove('video-active');
-      });
-      const card = btn.closest('.team-videos_ci');
-      if (card) card.classList.add('video-active');
-    }
-
-    function closeLightbox() {
-      console.log('   🔴 Closing lightbox');
-      setState(lightbox, 'is-activated', false);
-      if (player) {
-        player.pause();
-        setState(lightbox, 'is-playing', false);
-      }
-    }
-
-    // ========================================================================
-    // CLOSE HANDLERS
-    // ========================================================================
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeLightbox();
-    });
-
-    closeButtons.forEach((btn) => {
-      btn.addEventListener('click', closeLightbox);
-    });
-
-    // ========================================================================
-    // PLAYER EVENT SETUP
-    // ========================================================================
-
-    async function refreshDurationAndTimeline() {
-      try {
-        const d = await player.getDuration();
-        const durEl = lightbox.querySelector('[data-vimeo-duration]');
-        if (durEl) durEl.textContent = Utils.formatTime(d);
-        lightbox.querySelectorAll('[data-vimeo-control="timeline"],progress').forEach(el => {
-          el.max = d;
-        });
-        const tl = lightbox.querySelector('[data-vimeo-control="timeline"]');
-        const pr = lightbox.querySelector('progress');
-        if (tl) tl.value = 0;
-        if (pr) pr.value = 0;
-      } catch (_) {}
-    }
-
-    function setupPlayerEvents() {
-      console.log('   🎬 Setting up player events');
-
-      player.on('play', () => {
-        setState(lightbox, 'is-loaded', true);
-        setState(lightbox, 'is-playing', true);
-      });
-
-      player.on('ended', () => {
-        setState(lightbox, 'is-playing', false);
-      });
-
-      player.on('pause', () => {
-        setState(lightbox, 'is-playing', false);
-      });
-
-      refreshDurationAndTimeline();
-
-      // Timeline/progress tracking
-      const tl = lightbox.querySelector('[data-vimeo-control="timeline"]');
-      const pr = lightbox.querySelector('progress');
-      player.on('timeupdate', (data) => {
-        if (tl) tl.value = data.seconds;
-        if (pr) pr.value = data.seconds;
-        const curEl = lightbox.querySelector('[data-vimeo-duration]');
-        if (curEl) curEl.textContent = Utils.formatTime(Math.trunc(data.seconds));
-      });
-
-      // Timeline input
-      if (tl) {
-        ['input', 'change'].forEach((evt) => {
-          tl.addEventListener(evt, (e) => {
-            const v = Number(e.target.value || 0);
-            player.setCurrentTime(v);
-            if (pr) pr.value = v;
-          });
-        });
-      }
-
-      // Hover controls
-      let hoverTimer;
-      playerContainer.addEventListener('mousemove', () => {
-        setState(lightbox, 'is-hover', true);
-        clearTimeout(hoverTimer);
-        hoverTimer = setTimeout(() => {
-          setState(lightbox, 'is-hover', false);
-        }, 3000);
-      });
-
-      // Fullscreen button
-      const fsBtn = lightbox.querySelector('[data-vimeo-control="fullscreen"]');
-      if (fsBtn) {
-        const isFS = () => document.fullscreenElement || document.webkitFullscreenElement;
-        if (!(document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
-          fsBtn.style.display = 'none';
+    // Hide current video
+    if (activeIndex >= 0 && activeIndex < videoContainers.length) {
+      const currentContainer = videoContainers[activeIndex];
+      if (currentContainer) {
+        currentContainer.style.display = 'none';
+        
+        // Pause current player if exists
+        if (players[activeIndex]) {
+          players[activeIndex].pause();
         }
+      }
+    }
 
-        fsBtn.addEventListener('click', () => {
-          if (isFS()) {
-            setState(lightbox, 'is-fullscreen', false);
-            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-          } else {
-            setState(lightbox, 'is-fullscreen', true);
-            (playerContainer.requestFullscreen || playerContainer.webkitRequestFullscreen).call(playerContainer);
+    // Show new video
+    const newContainer = videoContainers[index];
+    if (newContainer) {
+      newContainer.style.display = 'block';
+      
+      // Initialize Plyr if not already done
+      const player = await initPlyrForVideo(index);
+      
+      // Update active index
+      activeIndex = index;
+      
+      // Update thumbnails
+      updateThumbnails(activeIndex);
+      
+      // Auto-play the video
+      if (player) {
+        setTimeout(() => {
+          player.play().catch(err => {
+            console.warn('Auto-play prevented:', err);
+          });
+        }, 100);
+      }
+    }
+  }
+
+  /**
+   * Open the lightbox and show first video
+   */
+  async function openLightbox() {
+    if (isOpen) return;
+
+    isOpen = true;
+    lightbox.classList.add('is-open');
+    
+    // Show first video (index 0)
+    if (videoContainers.length > 0) {
+      await switchVideo(0);
+    }
+  }
+
+  /**
+   * Close the lightbox
+   */
+  function closeLightbox() {
+    if (!isOpen) return;
+
+    isOpen = false;
+    lightbox.classList.remove('is-open');
+
+    // Pause active video
+    if (activeIndex >= 0 && players[activeIndex]) {
+      players[activeIndex].pause();
+    }
+
+    // Hide all videos
+    videoContainers.forEach(container => {
+      container.style.display = 'none';
+    });
+
+    activeIndex = -1;
+  }
+
+  /**
+   * Initialize the lightbox system
+   */
+  async function init() {
+    console.log('🚀 VimeoLightbox.init() called');
+
+    // Find lightbox container
+    lightbox = document.querySelector('.video-lightbox');
+    if (!lightbox) {
+      console.warn('   ⚠️  No lightbox container found (.video-lightbox)');
+      return;
+    }
+
+    // Get all thumbnails
+    thumbnails = Array.from(document.querySelectorAll('[lightbox="thumbnail"]'));
+    console.log(`   ✓ Found ${thumbnails.length} thumbnails`);
+
+    // Get all video containers
+    videoContainers = Array.from(document.querySelectorAll('.video-ligthbox_right-content .w-dyn-item'));
+    console.log(`   ✓ Found ${videoContainers.length} video containers`);
+
+    // Validate that we have matching counts
+    if (thumbnails.length !== videoContainers.length) {
+      console.warn(`   ⚠️  Mismatch: ${thumbnails.length} thumbnails vs ${videoContainers.length} videos`);
+    }
+
+    // Initialize players array
+    players = new Array(videoContainers.length).fill(null);
+
+    // Hide all videos by default
+    videoContainers.forEach(container => {
+      container.style.display = 'none';
+    });
+
+    // Set default thumbnail opacity
+    thumbnails.forEach((thumb, index) => {
+      const collectionItem = thumb.closest('.video-lightbox_collection-item');
+      if (collectionItem) {
+        collectionItem.style.opacity = '0.4';
+        collectionItem.classList.remove('is-active');
+      }
+    });
+
+    // Add click handlers to thumbnails (on the collection item to include overlay)
+    thumbnails.forEach((thumb, index) => {
+      const collectionItem = thumb.closest('.video-lightbox_collection-item');
+      if (collectionItem) {
+        collectionItem.style.cursor = 'pointer';
+        collectionItem.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (isOpen) {
+            await switchVideo(index);
           }
         });
-
-        ['fullscreenchange', 'webkitfullscreenchange'].forEach((evt) => {
-          document.addEventListener(evt, () => {
-            setState(lightbox, 'is-fullscreen',
-              (document.fullscreenElement || document.webkitFullscreenElement) ? true : false
-            );
-          });
-        });
       }
-    }
-
-    // ========================================================================
-    // SIZING
-    // ========================================================================
-
-    async function runSizing() {
-      const mode = lightbox.getAttribute('data-vimeo-update-size');
-      const w = await player.getVideoWidth();
-      const h = await player.getVideoHeight();
-      const ar = h / w;
-      const bef = lightbox.querySelector('.vimeo-lightbox__before');
-
-      if (mode === 'true') {
-        if (bef) bef.style.paddingTop = (ar * 100) + '%';
-        clampWrapSize(ar);
-      } else if (mode === 'cover') {
-        videoAspectRatio = ar;
-        if (bef) bef.style.paddingTop = '0%';
-        adjustCoverSizing();
-      } else {
-        clampWrapSize(ar);
-      }
-    }
-
-    window.addEventListener('resize', () => {
-      if (player) runSizing();
     });
 
-    // ========================================================================
-    // VIDEO SWITCHING
-    // ========================================================================
-
-    async function switchVideo(id, placeholderBtn, forceAutoplay = false) {
-      const vid = Utils.extractVimeoId(id);
-      if (!vid) {
-        console.warn('[Vimeo] Invalid video ID:', id);
-        return;
-      }
-
-      console.log(`   🎥 Switching to video: ${vid}`);
-
-      if (placeholderBtn && placeholder) {
-        ['src', 'srcset', 'sizes', 'alt', 'width'].forEach((attr) => {
-          const val = placeholderBtn.getAttribute(attr);
-          if (val != null) placeholder.setAttribute(attr, val);
+    // Prevent clicks on video iframes from doing anything
+    videoContainers.forEach(container => {
+      const iframe = container.querySelector('iframe');
+      if (iframe) {
+        iframe.addEventListener('click', (e) => {
+          // Do nothing - clicks on videos are ignored
+          e.stopPropagation();
         });
       }
+    });
 
-      if (vid === currentVideoID) {
-        try {
-          await player.setCurrentTime(0);
-        } catch (_) {}
-        await player.setVolume(globalMuted ? 0 : 1);
-        setState(lightbox, 'is-playing', true);
-        return player.play();
-      }
-
-      setState(lightbox, 'is-loaded', false);
-      setState(lightbox, 'is-playing', false);
-
-      try {
-        await player.pause();
-        await player.loadVideo(vid);
-        currentVideoID = vid;
-
-        await refreshDurationAndTimeline();
-        await runSizing();
-        setState(lightbox, 'is-loaded', true);
-
-        if (forceAutoplay || !isTouch || playedOnce.has(currentVideoID)) {
-          await player.setVolume(globalMuted ? 0 : 1);
-          setState(lightbox, 'is-playing', true);
-          await player.play();
-          playedOnce.add(currentVideoID);
-        }
-      } catch (err) {
-        console.warn('   ⚠️  Error switching video, opening fresh lightbox');
-        return openLightbox(vid, placeholderBtn, forceAutoplay);
-      }
-    }
-
-    // ========================================================================
-    // LIGHTBOX OPENING
-    // ========================================================================
-
-    async function openLightbox(id, placeholderBtn, forceAutoplay = false) {
-      const vid = Utils.extractVimeoId(id);
-      if (!vid) {
-        console.warn('[Vimeo] Invalid video ID:', id);
-        return;
-      }
-
-      console.log(`   🎬 Opening lightbox with video: ${vid}`);
-
-      setState(lightbox, 'is-loading', true);
-      setState(lightbox, 'is-loaded', false);
-
-      if (player && vid !== currentVideoID) {
-        await player.pause();
-        await player.unload();
-
-        const oldIframe = iframe;
-        const newIframe = document.createElement('iframe');
-        newIframe.className = oldIframe.className;
-        newIframe.setAttribute('allow', oldIframe.getAttribute('allow') || 'autoplay; encrypted-media');
-        newIframe.setAttribute('frameborder', '0');
-        newIframe.setAttribute('allowfullscreen', 'true');
-        oldIframe.parentNode.replaceChild(newIframe, oldIframe);
-
-        iframe = newIframe;
-        player = null;
-        currentVideoID = null;
-        setState(lightbox, 'is-playing', false);
-      }
-
-      if (placeholderBtn && placeholder) {
-        ['src', 'srcset', 'sizes', 'alt', 'width'].forEach((attr) => {
-          const val = placeholderBtn.getAttribute(attr);
-          if (val != null) placeholder.setAttribute(attr, val);
+    // Handle external open button
+    const openButtons = document.querySelectorAll('[data-vimeo-lightbox-control="open"]');
+    openButtons.forEach(btn => {
+      // Only handle buttons outside the lightbox
+      if (!lightbox.contains(btn)) {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          await openLightbox();
         });
       }
+    });
 
-      if (!player) {
-        // Ensure Vimeo SDK is loaded before creating player
-        try {
-          await loadVimeoSDK();
-        } catch (error) {
-          console.error('   ❌ Failed to load Vimeo SDK:', error);
-          setState(lightbox, 'is-loading', false);
-          return;
-        }
-
-        iframe.src = `https://player.vimeo.com/video/${vid}?api=1&background=1&autoplay=0&loop=0&muted=0`;
-        
-        if (typeof window.Vimeo === 'undefined' || !window.Vimeo.Player) {
-          console.error('   ❌ Vimeo SDK not available after loading');
-          setState(lightbox, 'is-loading', false);
-          return;
-        }
-
-        player = new window.Vimeo.Player(iframe);
-        setupPlayerEvents();
-        currentVideoID = vid;
-        await runSizing();
-      }
-
-      setState(lightbox, 'is-activated', true);
-      setState(lightbox, 'is-loading', false);
-
-      if (forceAutoplay || !isTouch || playedOnce.has(currentVideoID)) {
-        player.setVolume(globalMuted ? 0 : 1).then(() => {
-          setState(lightbox, 'is-playing', true);
-          setTimeout(() => player.play(), 50);
-          playedOnce.add(currentVideoID);
-        });
-      }
-    }
-
-    // ========================================================================
-    // CONTROL BUTTONS
-    // ========================================================================
-
-    const playBtn = lightbox.querySelector('[data-vimeo-control="play"]');
-    const pauseBtn = lightbox.querySelector('[data-vimeo-control="pause"]');
-    const muteBtn = lightbox.querySelector('[data-vimeo-control="mute"]');
-
-    if (playBtn) {
-      playBtn.addEventListener('click', () => player.play());
-    }
-
-    if (pauseBtn) {
-      pauseBtn.addEventListener('click', () => player.pause());
-    }
-
-    if (muteBtn) {
-      muteBtn.addEventListener('click', () => {
-        globalMuted = !globalMuted;
-        player.setVolume(globalMuted ? 0 : 1).then(() => {
-          setState(lightbox, 'is-muted', globalMuted);
-        });
-      });
-    }
-
-    // ========================================================================
-    // OPEN BUTTONS
-    // ========================================================================
-
-    function getFirstListVideo() {
-      const firstCard = document.querySelector('.team-videos_cl .team-videos_ci');
-      if (!firstCard) return { id: null, imgEl: null, card: null };
-      const btn = firstCard.querySelector('[data-vimeo-lightbox-control="open"]');
-      const raw = btn ? btn.getAttribute('data-vimeo-lightbox-id') : null;
-      const id = Utils.extractVimeoId(raw);
-      const imgEl = (btn && btn.querySelector('[data-vimeo-lightbox-placeholder]')) 
-        || firstCard.querySelector('.team-videos_image');
-      return { id, imgEl, card: firstCard };
-    }
-
-    openButtonsAll.forEach((btn) => {
-      const handler = (e) => {
+    // Handle close buttons
+    const closeButtons = document.querySelectorAll('[data-vimeo-lightbox-control="close"]');
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        const inside = lightbox.contains(btn);
-        let vid, img;
-
-        if (!inside) {
-          const first = getFirstListVideo();
-          vid = first.id;
-          img = first.imgEl;
-        } else {
-          const raw = btn.getAttribute('data-vimeo-lightbox-id');
-          vid = Utils.extractVimeoId(raw);
-          img = btn.querySelector('[data-vimeo-lightbox-placeholder]');
-        }
-
-        if (!vid) {
-          console.warn('[Vimeo] Missing/invalid video id for open:', btn);
-          return;
-        }
-
-        if (inside) {
-          markActive(btn);
-          switchVideo(vid, img, true);
-        } else {
-          openLightbox(vid, img, true);
-        }
-      };
-
-      btn.addEventListener('click', handler);
-      btn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') handler(e);
+        closeLightbox();
       });
     });
 
-    // ========================================================================
-    // INITIAL STATE
-    // ========================================================================
-
-    const firstCard = document.querySelector('.team-videos_ci');
-    if (firstCard && !firstCard.classList.contains('video-active')) {
-      firstCard.classList.add('video-active');
-    }
-
-    // Bootstrap first poster
-    (function bootstrapFirstPoster() {
-      const { id, imgEl } = getFirstListVideo();
-      if (imgEl && placeholder) {
-        ['src', 'srcset', 'sizes', 'alt', 'width'].forEach((attr) => {
-          const val = imgEl.getAttribute(attr);
-          if (val != null) placeholder.setAttribute(attr, val);
-        });
+    // Handle Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        closeLightbox();
       }
-
-      document.querySelectorAll('[data-vimeo-lightbox-control="open"]').forEach((btn) => {
-        if (lightbox.contains(btn)) return;
-        const img = btn.querySelector('[data-vimeo-lightbox-placeholder]');
-        if (!img) return;
-        const src = img.getAttribute('src') || '';
-        if (!src || /image\.jpg$/i.test(src)) {
-          if (imgEl) {
-            ['src', 'srcset', 'sizes', 'alt', 'width'].forEach((attr) => {
-              const val = imgEl.getAttribute(attr);
-              if (val != null) img.setAttribute(attr, val);
-            });
-          } else {
-            img.removeAttribute('src');
-          }
-        }
-      });
-    })();
-
-    // Preload Vimeo SDK in background for faster first video load
-    loadVimeoSDK().catch(err => {
-      console.warn('   ⚠️  Failed to preload Vimeo SDK (will retry on first video):', err);
     });
+
+    // Check if lightbox should be open by default (if it has is-open class)
+    if (lightbox.classList.contains('is-open')) {
+      isOpen = true;
+      if (videoContainers.length > 0) {
+        await switchVideo(0);
+      }
+    }
 
     console.log('✅ VimeoLightbox initialized');
   }
