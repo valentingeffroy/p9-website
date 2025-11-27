@@ -60,7 +60,7 @@
 .plyr__control--overlaid {
     -webkit-backdrop-filter: blur(1em);
     backdrop-filter: blur(1em);
-    background-color: #64646433 !important;
+    background-color: var(--brand--video-icon-background) !important;
     display: flex !important;
     justify-content: center;
     align-items: center;
