@@ -68,7 +68,7 @@
     height: 6rem !important;
 }
 
-.plyr__control svg {
+.plyr__control--overlaid svg {
     width: 50% !important;
     height: 50% !important;
 } 
