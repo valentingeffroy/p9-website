@@ -22,7 +22,7 @@ const Tooltips = (() => {
    */
   function resetIfHidden(tt, supportsTranslateProp) {
     const cs = getComputedStyle(tt);
-    if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) {
+    if (cs.display === 'none' || cs.visibility === 'hidden') {
       if (supportsTranslateProp) {
         tt.style.translate = '';
       } else {
