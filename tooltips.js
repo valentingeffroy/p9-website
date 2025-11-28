@@ -12,7 +12,7 @@ const Tooltips = (() => {
   // ========================================================================
   const OFFSET = 12;   // Distance from cursor
   const PADDING = 8;   // Minimum margin from window edge
-  const TRANSITION_DURATION = 200; // Opacity transition and hide delay duration in ms
+  const TRANSITION_DURATION = 400; // Opacity transition and hide delay duration in ms (increased for smoother animation)
 
   // ========================================================================
   // HELPERS
