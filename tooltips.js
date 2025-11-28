@@ -12,6 +12,7 @@ const Tooltips = (() => {
   // ========================================================================
   const OFFSET = 12;   // Distance from cursor
   const PADDING = 8;   // Minimum margin from window edge
+  const TRANSITION_DURATION = 200; // Opacity transition and hide delay duration in ms
 
   // ========================================================================
   // HELPERS
@@ -140,23 +141,61 @@ const Tooltips = (() => {
       tooltip.style.position = 'fixed';
     }
 
+    // Set transition for opacity
+    tooltip.style.transition = `opacity ${TRANSITION_DURATION}ms ease, visibility ${TRANSITION_DURATION}ms ease`;
+
     // Track tooltip state
     let isActive = false;
     let currentSource = null;
     let lastMouseX = null;
     let lastMouseY = null;
+    let hideTimeout = null;
 
     // Helper functions to show/hide tooltip
     function showTooltip() {
+      // Annuler tout masquage en cours
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+      
       tooltip.style.display = 'block';
-      tooltip.style.visibility = 'visible';
-      tooltip.style.pointerEvents = 'auto';
+      // Use requestAnimationFrame to ensure display:block happens before opacity transition
+      requestAnimationFrame(() => {
+        tooltip.style.opacity = '1';
+        tooltip.style.visibility = 'visible';
+        tooltip.style.pointerEvents = 'auto';
+      });
     }
 
     function hideTooltip() {
-      tooltip.style.display = 'none';
+      // Annuler tout timeout existant
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+
+      // Commencer la transition d'opacité
+      tooltip.style.opacity = '0';
       tooltip.style.visibility = 'hidden';
       tooltip.style.pointerEvents = 'none';
+      
+      // Cacher complètement après la transition
+      hideTimeout = setTimeout(() => {
+        // Vérifier qu'on n'est pas entré dans un autre source entre temps
+        if (!isActive) {
+          tooltip.style.display = 'none';
+          // Reset position seulement si vraiment caché
+          if (supportsTranslateProp) {
+            tooltip.style.translate = '';
+          } else {
+            tooltip.style.transform = tooltip.__baseTransform || '';
+          }
+          tooltip.style.left = '';
+          tooltip.style.top = '';
+        }
+        hideTimeout = null;
+      }, TRANSITION_DURATION);
     }
 
     // Initially hide the tooltip
@@ -180,13 +219,19 @@ const Tooltips = (() => {
         console.log('🖱️  mouseenter on source:', source);
         console.log('   tooltip found:', !!tooltip);
         
+        // Annuler tout masquage en cours
+        if (hideTimeout) {
+          clearTimeout(hideTimeout);
+          hideTimeout = null;
+        }
+        
         // Update content before showing
         updateTooltipContent(tooltip, source);
         
         isActive = true;
         currentSource = source;
         
-        // Show tooltip
+        // Show tooltip (l'opacité va remonter si elle était en train de baisser)
         showTooltip();
         console.log('   ✅ Tooltip shown');
         
@@ -201,17 +246,8 @@ const Tooltips = (() => {
         isActive = false;
         currentSource = null;
         
-        // Hide tooltip
+        // Hide tooltip (commence la transition d'opacité)
         hideTooltip();
-        
-        // Reset position
-        if (supportsTranslateProp) {
-          tooltip.style.translate = '';
-        } else {
-          tooltip.style.transform = tooltip.__baseTransform || '';
-        }
-        tooltip.style.left = '';
-        tooltip.style.top = '';
       });
     });
 
