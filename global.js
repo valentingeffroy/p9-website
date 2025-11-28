@@ -62,7 +62,8 @@ const GlobalSite = (() => {
         gsap.to(PANEL, { y: '0%', duration: 0.3, ease: 'power2.out' });
         gsap.to(LOGO, { color: 'white', duration: 0.3, ease: 'power2.out' });
       } else {
-        gsap.to(PANEL, { x: '0%', duration: 0.3, ease: 'power2.out' });
+        // Désactiver l'animation x (move right) - positionner directement sans transition
+        gsap.set(PANEL, { x: '0%' });
       }
     };
 
@@ -71,7 +72,8 @@ const GlobalSite = (() => {
         gsap.to(PANEL, { y: '-100%', duration: 0.3, ease: 'power2.in' });
         gsap.to(LOGO, { color: 'black', duration: 0.3, ease: 'power2.out' });
       } else {
-        gsap.to(PANEL, { x: '100%', duration: 0.3, ease: 'power2.in' });
+        // Désactiver l'animation x (move right) - positionner directement sans transition
+        gsap.set(PANEL, { x: '100%' });
       }
     };
 
@@ -250,13 +252,13 @@ const GlobalSite = (() => {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         initMenuAnimation();
-        initNavbarShadow();
+        // initNavbarShadow(); // Désactivé - animation box-shadow désactivée
         console.log('✅ GlobalSite initialized');
       });
     } else {
       // DOM already ready
       initMenuAnimation();
-      initNavbarShadow();
+      // initNavbarShadow(); // Désactivé - animation box-shadow désactivée
       console.log('✅ GlobalSite initialized');
     }
   }
