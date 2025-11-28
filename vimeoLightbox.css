@@ -2,6 +2,13 @@
    VIMEO LIGHTBOX - SIMPLIFIED TAB SYSTEM
    ============================================ */
 
+.video-lightbox_collection-item .play-image {
+    transform: scale(1);
+  }
+  .video-lightbox_collection-item:hover .play-image {
+    transform: scale(1.2);
+  }
+
 /* Lightbox Container */
 .video-lightbox {
   display: block;
