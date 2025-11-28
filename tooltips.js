@@ -12,7 +12,6 @@ const Tooltips = (() => {
   // ========================================================================
   const OFFSET = 12;   // Distance from cursor
   const PADDING = 8;   // Minimum margin from window edge
-  const TRANSITION_DURATION = 200; // Opacity transition duration in ms
 
   // ========================================================================
   // HELPERS
@@ -141,9 +140,6 @@ const Tooltips = (() => {
       tooltip.style.position = 'fixed';
     }
 
-    // Set transition for opacity
-    tooltip.style.transition = `opacity ${TRANSITION_DURATION}ms ease, visibility ${TRANSITION_DURATION}ms ease`;
-
     // Track tooltip state
     let isActive = false;
     let currentSource = null;
@@ -153,24 +149,14 @@ const Tooltips = (() => {
     // Helper functions to show/hide tooltip
     function showTooltip() {
       tooltip.style.display = 'block';
-      // Use requestAnimationFrame to ensure display:block happens before opacity transition
-      requestAnimationFrame(() => {
-        tooltip.style.opacity = '1';
-        tooltip.style.visibility = 'visible';
-        tooltip.style.pointerEvents = 'auto';
-      });
+      tooltip.style.visibility = 'visible';
+      tooltip.style.pointerEvents = 'auto';
     }
 
     function hideTooltip() {
-      tooltip.style.opacity = '0';
+      tooltip.style.display = 'none';
       tooltip.style.visibility = 'hidden';
       tooltip.style.pointerEvents = 'none';
-      // Hide after transition completes
-      setTimeout(() => {
-        if (parseFloat(getComputedStyle(tooltip).opacity) === 0) {
-          tooltip.style.display = 'none';
-        }
-      }, TRANSITION_DURATION);
     }
 
     // Initially hide the tooltip
