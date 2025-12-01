@@ -139,8 +139,9 @@ const FilterChips = (() => {
    * Handles "+N more" aggregation when multiple filters selected
    */
   function renderChips(targetEl, field, values) {
-    // Save placeholder before clearing innerHTML
-    const placeholder = targetEl.querySelector('.select-placeholder');
+    // Find placeholder in parent container (filter_dropdown-toggle-left) before clearing
+    const parentContainer = targetEl.closest('.filter_dropdown-toggle-left') || targetEl.parentElement;
+    const placeholder = parentContainer ? parentContainer.querySelector('.select-placeholder') : null;
     const placeholderClone = placeholder ? placeholder.cloneNode(true) : null;
     
     targetEl.innerHTML = '';
@@ -149,9 +150,12 @@ const FilterChips = (() => {
     if (!values || values.length === 0) {
       targetEl.removeAttribute('aria-label');
       targetEl.removeAttribute('role');
-      // Restore placeholder if it existed
-      if (placeholderClone) {
-        targetEl.appendChild(placeholderClone);
+      // Restore placeholder in parent container if it existed
+      if (placeholderClone && parentContainer) {
+        // Check if placeholder doesn't already exist
+        if (!parentContainer.querySelector('.select-placeholder')) {
+          parentContainer.appendChild(placeholderClone);
+        }
       }
       return;
     }
