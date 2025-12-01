@@ -280,26 +280,37 @@ const FilterChips = (() => {
         e.preventDefault();
         e.stopPropagation();
 
+        console.log('   🖱️  Close button clicked:', closeBtn);
+        
         const dropdown = closeBtn.closest('.w-dropdown');
+        console.log('   🔍 Closest .w-dropdown found:', dropdown);
+        
         if (!dropdown) {
           console.warn('   ⚠️  No dropdown found for close button');
           return;
         }
 
         const toggle = dropdown.querySelector('.w-dropdown-toggle');
-        const list = dropdown.querySelector('.w-dropdown-list');
-
-        // Remove w--open classes to close dropdown
-        if (toggle) {
-          toggle.classList.remove('w--open');
-          toggle.setAttribute('aria-expanded', 'false');
-          console.log('   🖱️  Removed w--open from toggle:', toggle);
+        console.log('   🔍 Toggle found:', toggle);
+        
+        if (!toggle) {
+          console.warn('   ⚠️  No toggle found in dropdown');
+          return;
         }
 
-        if (list) {
-          list.classList.remove('w--open');
-          console.log('   🖱️  Removed w--open from list:', list);
-        }
+        // Simulate click on toggle to close dropdown (uses Webflow's native behavior)
+        console.log('   🖱️  Clicking on toggle:', toggle);
+        toggle.click();
+
+        // Second attempt if first one didn't work
+        requestAnimationFrame(() => {
+          const list = dropdown.querySelector('.w-dropdown-list');
+          const stillOpen = toggle.classList.contains('w--open') || (list && list.classList.contains('w--open'));
+          if (stillOpen) {
+            console.log('   🖱️  Second click attempt on toggle:', toggle);
+            setTimeout(() => toggle.click(), 40);
+          }
+        });
       });
     });
 
