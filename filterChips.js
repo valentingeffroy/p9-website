@@ -286,18 +286,23 @@ const FilterChips = (() => {
           return;
         }
 
-        // Simulate click on dropdown to close it (uses Webflow's native behavior)
-        console.log('   🖱️  Clicking on:', dropdown);
-        dropdown.click();
+        const toggle = dropdown.querySelector('.w-dropdown-toggle');
+        if (!toggle) {
+          console.warn('   ⚠️  No toggle found in dropdown');
+          return;
+        }
+
+        // Simulate click on toggle to close dropdown (uses Webflow's native behavior)
+        console.log('   🖱️  Clicking on:', toggle);
+        toggle.click();
 
         // Second attempt if first one didn't work
         requestAnimationFrame(() => {
-          const toggle = dropdown.querySelector('.w-dropdown-toggle');
           const list = dropdown.querySelector('.w-dropdown-list');
-          const stillOpen = (toggle && toggle.classList.contains('w--open')) || (list && list.classList.contains('w--open'));
+          const stillOpen = toggle.classList.contains('w--open') || (list && list.classList.contains('w--open'));
           if (stillOpen) {
-            console.log('   🖱️  Second click attempt on:', dropdown);
-            setTimeout(() => dropdown.click(), 40);
+            console.log('   🖱️  Second click attempt on:', toggle);
+            setTimeout(() => toggle.click(), 40);
           }
         });
       });
