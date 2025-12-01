@@ -298,9 +298,35 @@ const FilterChips = (() => {
           return;
         }
 
-        // Simulate click on toggle to close dropdown (uses Webflow's native behavior)
-        console.log('   🖱️  Clicking on toggle:', toggle);
-        toggle.click();
+        // Focus helps when Webflow listens to keyboard/tap semantics
+        if (typeof toggle.focus === 'function') {
+          try {
+            toggle.focus({ preventScroll: true });
+          } catch (_) {
+            toggle.focus();
+          }
+        }
+
+        // Fire a realistic sequence of native events on the toggle
+        const fire = (type, Ctor = MouseEvent, extra = {}) => {
+          toggle.dispatchEvent(new Ctor(type, { bubbles: true, cancelable: true, ...extra }));
+        };
+
+        try {
+          if (window.PointerEvent) {
+            fire('pointerdown', PointerEvent);
+            fire('pointerup', PointerEvent);
+          }
+          fire('mousedown');
+          fire('mouseup');
+          // Native .click() triggers Webflow's native listeners
+          console.log('   🖱️  Clicking on toggle:', toggle);
+          toggle.click();
+        } catch (err) {
+          // Fallback: just click
+          console.log('   🖱️  Clicking on toggle (fallback):', toggle);
+          toggle.click();
+        }
 
         // Second attempt if first one didn't work
         requestAnimationFrame(() => {
