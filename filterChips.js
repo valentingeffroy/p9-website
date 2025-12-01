@@ -268,7 +268,7 @@ const FilterChips = (() => {
   /**
    * Initialize close dropdown button handlers
    * Closes Webflow dropdown when [close-dropdown] is clicked
-   * Simulates a click on the dropdown toggle to use Webflow's native behavior
+   * Simulates a click on the closest .w-dropdown parent
    */
   function initCloseDropdownHandlers() {
     console.log('   🔗 Initializing close dropdown handlers...');
@@ -286,21 +286,16 @@ const FilterChips = (() => {
           return;
         }
 
-        const toggle = dropdown.querySelector('.w-dropdown-toggle');
-        if (!toggle) {
-          console.warn('   ⚠️  No toggle found in dropdown');
-          return;
-        }
-
-        // Simulate click on toggle to close dropdown (uses Webflow's native behavior)
-        toggle.click();
+        // Simulate click on dropdown to close it (uses Webflow's native behavior)
+        dropdown.click();
 
         // Second attempt if first one didn't work
         requestAnimationFrame(() => {
+          const toggle = dropdown.querySelector('.w-dropdown-toggle');
           const list = dropdown.querySelector('.w-dropdown-list');
-          const stillOpen = toggle.classList.contains('w--open') || (list && list.classList.contains('w--open'));
+          const stillOpen = (toggle && toggle.classList.contains('w--open')) || (list && list.classList.contains('w--open'));
           if (stillOpen) {
-            setTimeout(() => toggle.click(), 40);
+            setTimeout(() => dropdown.click(), 40);
           }
         });
       });
