@@ -95,51 +95,37 @@ const GlobalSite = (() => {
   function initNavbarShadow() {
     console.log('   🌑 Initializing navbar shadow...');
 
-    // Guard: require ScrollTrigger
-    if (typeof ScrollTrigger === 'undefined') {
-      console.warn('   ⚠️  ScrollTrigger not available, skipping navbar shadow');
+    const NAVBAR = '.navbar1_component';
+
+    const navbar = document.querySelector(NAVBAR);
+
+    if (!navbar) {
+      console.warn('   ⚠️  Navbar not found (.navbar1_component)');
       return;
     }
 
-    const nav = document.querySelector('.nav');
-    const navbarShadow = document.querySelector('.navbar-shadow');
-
-    if (!nav || !navbarShadow) {
-      console.warn('   ⚠️  Nav or navbar-shadow elements not found');
-      return;
-    }
-
-    let isActive = false;   // true only after .nav top touches viewport top
-    let hideTimer = null;
-
-    // Helper to show + schedule hide after 1000ms of no scroll
-    const bumpVisibility = () => {
-      navbarShadow.style.opacity = '1';
-      clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => {
-        navbarShadow.style.opacity = '0';
-      }, 1000); // linger for 1s after scroll stops
-    };
-
-    // Track when .nav reaches the top of viewport
-    ScrollTrigger.create({
-      trigger: nav,
-      start: 'top top',
-      onEnter: () => { 
-        isActive = true; 
-      }, // from below → active
-      onLeaveBack: () => { // scrolling back up past start
-        isActive = false;
-        clearTimeout(hideTimer);
-        navbarShadow.style.opacity = '0'; // ensure hidden before activation zone
+    // Use IntersectionObserver to detect when navbar top touches viewport top
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.boundingClientRect.top <= 0) {
+            // Navbar top is at or above viewport top - add shadow
+            navbar.classList.add('is-shadow');
+          } else {
+            // Navbar top is below viewport top - remove shadow
+            navbar.classList.remove('is-shadow');
+          }
+        });
+      },
+      {
+        root: null, // viewport
+        rootMargin: '0px',
+        threshold: 0 // Trigger as soon as any part enters
       }
-    });
+    );
 
-    // Scroll listener: only runs while active
-    window.addEventListener('scroll', () => {
-      if (!isActive) return;
-      bumpVisibility();
-    }, { passive: true });
+    // Observe the navbar
+    observer.observe(navbar);
 
     console.log('   ✓ Navbar shadow initialized');
   }
@@ -155,11 +141,13 @@ const GlobalSite = (() => {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         initMenuAnimation();
+        initNavbarShadow();
         console.log('✅ GlobalSite initialized');
       });
     } else {
       // DOM already ready
       initMenuAnimation();
+      initNavbarShadow();
       console.log('✅ GlobalSite initialized');
     }
   }
