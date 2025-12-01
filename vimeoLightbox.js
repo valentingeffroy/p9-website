@@ -5,7 +5,7 @@
  */
 
 const VimeoLightbox = (() => {
-  console.log('📦 VimeoLightbox module loading...');
+  // console.log('📦 VimeoLightbox module loading...');
 
   // State
   let lightbox = null;
@@ -29,12 +29,12 @@ const VimeoLightbox = (() => {
 
     // Check if Plyr is already loaded
     if (typeof Plyr !== 'undefined') {
-      console.log('   ✓ Plyr already loaded');
+      // console.log('   ✓ Plyr already loaded');
       plyrLoadPromise = Promise.resolve();
       return plyrLoadPromise;
     }
 
-    console.log('   📥 Loading Plyr...');
+    // console.log('   📥 Loading Plyr...');
 
     // Create promise to load Plyr
     plyrLoadPromise = new Promise((resolve, reject) => {
@@ -51,7 +51,7 @@ const VimeoLightbox = (() => {
 
       script.addEventListener('load', () => {
         if (typeof Plyr !== 'undefined') {
-          console.log('   ✓ Plyr loaded successfully');
+          // console.log('   ✓ Plyr loaded successfully');
           resolve();
         } else {
           reject(new Error('Plyr failed to initialize'));
@@ -75,13 +75,13 @@ const VimeoLightbox = (() => {
   async function initPlyrForVideo(index) {
     if (players[index]) {
       // Already initialized
-      console.log(`   ✓ Plyr already initialized for video ${index}`);
+      // console.log(`   ✓ Plyr already initialized for video ${index}`);
       return players[index];
     }
 
     const videoContainer = videoContainers[index];
     if (!videoContainer) {
-      console.warn(`   ⚠️  Video container not found for index ${index}`);
+      // console.warn(`   ⚠️  Video container not found for index ${index}`);
       return null;
     }
 
@@ -90,7 +90,7 @@ const VimeoLightbox = (() => {
     const targetElement = plyrContainer || videoContainer.querySelector('iframe');
     
     if (!targetElement) {
-      console.warn(`   ⚠️  No iframe or Plyr container found for video ${index}`);
+      // console.warn(`   ⚠️  No iframe or Plyr container found for video ${index}`);
       return null;
     }
 
@@ -98,17 +98,17 @@ const VimeoLightbox = (() => {
     try {
       await loadPlyr();
     } catch (error) {
-      console.error('   ❌ Failed to load Plyr:', error);
+      // console.error('   ❌ Failed to load Plyr:', error);
       return null;
     }
 
     // Check if Plyr is available
     if (typeof Plyr === 'undefined') {
-      console.warn('   ⚠️  Plyr is not available');
+      // console.warn('   ⚠️  Plyr is not available');
       return null;
     }
 
-    console.log(`   📹 Initializing Plyr for video ${index}...`);
+    // console.log(`   📹 Initializing Plyr for video ${index}...`);
 
     // Initialize Plyr - use the container or iframe
     const player = new Plyr(targetElement, {
@@ -120,7 +120,7 @@ const VimeoLightbox = (() => {
     // Wait for Plyr to be ready
     return new Promise((resolve) => {
       player.on('ready', () => {
-        console.log(`   ✓ Plyr ready for video ${index}`);
+        // console.log(`   ✓ Plyr ready for video ${index}`);
         players[index] = player;
         resolve(player);
       });
@@ -128,7 +128,7 @@ const VimeoLightbox = (() => {
       // Fallback: resolve after a short delay if ready event doesn't fire
       setTimeout(() => {
         if (!players[index]) {
-          console.log(`   ✓ Plyr initialized for video ${index} (timeout fallback)`);
+          // console.log(`   ✓ Plyr initialized for video ${index} (timeout fallback)`);
           players[index] = player;
           resolve(player);
         }
@@ -167,7 +167,7 @@ const VimeoLightbox = (() => {
 
     // Validate index
     if (index < 0 || index >= videoContainers.length) {
-      console.warn(`Invalid video index: ${index}`);
+      // console.warn(`Invalid video index: ${index}`);
       return;
     }
 
@@ -201,7 +201,7 @@ const VimeoLightbox = (() => {
       
       // Auto-play the video
       if (player && typeof player.play === 'function') {
-        console.log(`   ▶️  Attempting to play video ${index}...`);
+        // console.log(`   ▶️  Attempting to play video ${index}...`);
         
         // Wait a bit for the iframe to be visible and ready
         setTimeout(() => {
@@ -210,20 +210,20 @@ const VimeoLightbox = (() => {
             if (playPromise && typeof playPromise.then === 'function') {
               playPromise
                 .then(() => {
-                  console.log(`   ✓ Video ${index} playing`);
+                  // console.log(`   ✓ Video ${index} playing`);
                 })
                 .catch(err => {
-                  console.warn(`   ⚠️  Auto-play prevented for video ${index}:`, err.message || err);
+                  // console.warn(`   ⚠️  Auto-play prevented for video ${index}:`, err.message || err);
                 });
             } else {
-              console.warn(`   ⚠️  player.play() did not return a Promise for video ${index}`);
+              // console.warn(`   ⚠️  player.play() did not return a Promise for video ${index}`);
             }
           } catch (err) {
-            console.error(`   ❌ Error playing video ${index}:`, err);
+            // console.error(`   ❌ Error playing video ${index}:`, err);
           }
         }, 300);
       } else {
-        console.warn(`   ⚠️  Player not available or play() method missing for video ${index}`);
+        // console.warn(`   ⚠️  Player not available or play() method missing for video ${index}`);
       }
     }
   }
@@ -283,7 +283,7 @@ const VimeoLightbox = (() => {
    * This makes switching between videos smoother
    */
   function preloadVimeoIframes() {
-    console.log('   📥 Preloading Vimeo iframes...');
+    // console.log('   📥 Preloading Vimeo iframes...');
     
     videoContainers.forEach((container, index) => {
       const iframe = container.querySelector('iframe');
@@ -307,7 +307,7 @@ const VimeoLightbox = (() => {
           container.style.height = '';
         }, 100);
         
-        console.log(`   ✓ Preloading iframe ${index}`);
+        // console.log(`   ✓ Preloading iframe ${index}`);
       }
     });
   }
@@ -316,26 +316,26 @@ const VimeoLightbox = (() => {
    * Initialize the lightbox system
    */
   async function init() {
-    console.log('🚀 VimeoLightbox.init() called');
+    // console.log('🚀 VimeoLightbox.init() called');
 
     // Find lightbox container
     lightbox = document.querySelector('.video-lightbox');
     if (!lightbox) {
-      console.warn('   ⚠️  No lightbox container found (.video-lightbox)');
+      // console.warn('   ⚠️  No lightbox container found (.video-lightbox)');
       return;
     }
 
     // Get all thumbnails
     thumbnails = Array.from(document.querySelectorAll('[lightbox="thumbnail"]'));
-    console.log(`   ✓ Found ${thumbnails.length} thumbnails`);
+    // console.log(`   ✓ Found ${thumbnails.length} thumbnails`);
 
     // Get all video containers
     videoContainers = Array.from(document.querySelectorAll('.video-ligthbox_right-content .w-dyn-item'));
-    console.log(`   ✓ Found ${videoContainers.length} video containers`);
+    // console.log(`   ✓ Found ${videoContainers.length} video containers`);
 
     // Validate that we have matching counts
     if (thumbnails.length !== videoContainers.length) {
-      console.warn(`   ⚠️  Mismatch: ${thumbnails.length} thumbnails vs ${videoContainers.length} videos`);
+      // console.warn(`   ⚠️  Mismatch: ${thumbnails.length} thumbnails vs ${videoContainers.length} videos`);
     }
 
     // Initialize players array
@@ -430,7 +430,7 @@ const VimeoLightbox = (() => {
       preloadVimeoIframes();
     }, 500);
 
-    console.log('✅ VimeoLightbox initialized');
+    // console.log('✅ VimeoLightbox initialized');
   }
 
   return { init };

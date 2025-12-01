@@ -5,7 +5,7 @@
  */
 
 const Tooltips = (() => {
-  console.log('📦 Tooltips module loading...');
+  // console.log('📦 Tooltips module loading...');
 
   // ========================================================================
   // CONFIGURATION (Hardcoded values)
@@ -40,12 +40,12 @@ const Tooltips = (() => {
    * Update tooltip content from source element
    */
   function updateTooltipContent(tooltip, source) {
-    console.log('🔄 updateTooltipContent called');
-    console.log('   tooltip:', tooltip);
-    console.log('   source:', source);
+    // console.log('🔄 updateTooltipContent called');
+    // console.log('   tooltip:', tooltip);
+    // console.log('   source:', source);
     
     if (!tooltip || !source) {
-      console.warn('   ⚠️  Missing tooltip or source');
+      // console.warn('   ⚠️  Missing tooltip or source');
       return;
     }
 
@@ -53,40 +53,40 @@ const Tooltips = (() => {
     const sourceImage = source.querySelector('[tooltip="image"]');
     const sourceParagraph = source.querySelector('[tooltip="paragraph"]');
     
-    console.log('   sourceImage:', sourceImage);
-    console.log('   sourceParagraph:', sourceParagraph);
+    // console.log('   sourceImage:', sourceImage);
+    // console.log('   sourceParagraph:', sourceParagraph);
 
     // Find target elements in tooltip
     const targetImage = tooltip.querySelector('[tooltip="image"]');
     const targetParagraph = tooltip.querySelector('[tooltip="paragraph"]');
     
-    console.log('   targetImage:', targetImage);
-    console.log('   targetParagraph:', targetParagraph);
+    // console.log('   targetImage:', targetImage);
+    // console.log('   targetParagraph:', targetParagraph);
 
     // Copy image
     if (sourceImage && targetImage) {
       const src = sourceImage.getAttribute('src');
       const alt = sourceImage.getAttribute('alt') || '';
-      console.log('   📸 Copying image - src:', src, 'alt:', alt);
+      // console.log('   📸 Copying image - src:', src, 'alt:', alt);
       if (src) {
         targetImage.setAttribute('src', src);
         targetImage.setAttribute('alt', alt);
-        console.log('   ✅ Image copied');
+        // console.log('   ✅ Image copied');
       } else {
-        console.warn('   ⚠️  No src attribute on source image');
+        // console.warn('   ⚠️  No src attribute on source image');
       }
     } else {
-      console.warn('   ⚠️  Missing sourceImage or targetImage', { sourceImage: !!sourceImage, targetImage: !!targetImage });
+      // console.warn('   ⚠️  Missing sourceImage or targetImage', { sourceImage: !!sourceImage, targetImage: !!targetImage });
     }
 
     // Copy paragraph text
     if (sourceParagraph && targetParagraph) {
       const text = sourceParagraph.textContent;
-      console.log('   📝 Copying paragraph:', text);
+      // console.log('   📝 Copying paragraph:', text);
       targetParagraph.textContent = text;
-      console.log('   ✅ Paragraph copied');
+      // console.log('   ✅ Paragraph copied');
     } else {
-      console.warn('   ⚠️  Missing sourceParagraph or targetParagraph', { sourceParagraph: !!sourceParagraph, targetParagraph: !!targetParagraph });
+      // console.warn('   ⚠️  Missing sourceParagraph or targetParagraph', { sourceParagraph: !!sourceParagraph, targetParagraph: !!targetParagraph });
     }
   }
 
@@ -94,38 +94,38 @@ const Tooltips = (() => {
    * Initialize tooltip positioning system
    */
   function init() {
-    console.log('🚀 Tooltips.init() called');
+    // console.log('🚀 Tooltips.init() called');
 
     // Find single global tooltip target
     const tooltip = document.querySelector('[tooltip="target"]');
 
     if (!tooltip) {
-      console.warn('   ⚠️  No tooltip element found ([tooltip="target"])');
+      // console.warn('   ⚠️  No tooltip element found ([tooltip="target"])');
       return;
     }
 
-    console.log('   ✓ Single tooltip found');
-    console.log('   Tooltip element:', tooltip);
-    console.log('   Tooltip innerHTML preview:', tooltip.innerHTML.substring(0, 200));
+    // console.log('   ✓ Single tooltip found');
+    // console.log('   Tooltip element:', tooltip);
+    // console.log('   Tooltip innerHTML preview:', tooltip.innerHTML.substring(0, 200));
     
     // Vérifier les éléments enfants du tooltip
     const tooltipImage = tooltip.querySelector('[tooltip="image"]');
     const tooltipParagraph = tooltip.querySelector('[tooltip="paragraph"]');
-    console.log('   Tooltip [tooltip="image"] found:', !!tooltipImage);
-    console.log('   Tooltip [tooltip="paragraph"] found:', !!tooltipParagraph);
-    if (tooltipImage) {
-      console.log('   Tooltip image current src:', tooltipImage.getAttribute('src'));
-    }
-    if (tooltipParagraph) {
-      console.log('   Tooltip paragraph current content:', tooltipParagraph.textContent);
-    }
+    // console.log('   Tooltip [tooltip="image"] found:', !!tooltipImage);
+    // console.log('   Tooltip [tooltip="paragraph"] found:', !!tooltipParagraph);
+    // if (tooltipImage) {
+    //   console.log('   Tooltip image current src:', tooltipImage.getAttribute('src'));
+    // }
+    // if (tooltipParagraph) {
+    //   console.log('   Tooltip paragraph current content:', tooltipParagraph.textContent);
+    // }
 
     // Check if browser supports CSS translate property
     const supportsTranslateProp = typeof CSS !== 'undefined'
       && CSS.supports
       && CSS.supports('translate', '1px');
 
-    console.log(`   🖥️  CSS translate support: ${supportsTranslateProp ? 'YES' : 'NO'}`);
+    // console.log(`   🖥️  CSS translate support: ${supportsTranslateProp ? 'YES' : 'NO'}`);
 
     // ========================================================================
     // SETUP: Initialize single tooltip
@@ -206,18 +206,18 @@ const Tooltips = (() => {
     // ========================================================================
     const sources = document.querySelectorAll('[tooltip="source"]');
     
-    console.log(`   📍 Found ${sources.length} source element(s)`);
+    // console.log(`   📍 Found ${sources.length} source element(s)`);
     
     sources.forEach((source) => {
       const sourceImageCheck = source.querySelector('[tooltip="image"]');
       const sourceParagraphCheck = source.querySelector('[tooltip="paragraph"]');
-      console.log('   Source [tooltip="image"] found:', !!sourceImageCheck);
-      console.log('   Source [tooltip="paragraph"] found:', !!sourceParagraphCheck);
+      // console.log('   Source [tooltip="image"] found:', !!sourceImageCheck);
+      // console.log('   Source [tooltip="paragraph"] found:', !!sourceParagraphCheck);
 
       // Activate tooltip when hovering source
       source.addEventListener('mouseenter', () => {
-        console.log('🖱️  mouseenter on source:', source);
-        console.log('   tooltip found:', !!tooltip);
+        // console.log('🖱️  mouseenter on source:', source);
+        // console.log('   tooltip found:', !!tooltip);
         
         // Annuler tout masquage en cours
         if (hideTimeout) {
@@ -233,7 +233,7 @@ const Tooltips = (() => {
         
         // Show tooltip (l'opacité va remonter si elle était en train de baisser)
         showTooltip();
-        console.log('   ✅ Tooltip shown');
+        // console.log('   ✅ Tooltip shown');
         
         // Immediately position tooltip if we have a last known mouse position
         if (lastMouseX !== null && lastMouseY !== null) {
@@ -356,7 +356,7 @@ const Tooltips = (() => {
       });
     });
 
-    console.log('✅ Tooltips initialized');
+    // console.log('✅ Tooltips initialized');
   }
 
   return { init };
