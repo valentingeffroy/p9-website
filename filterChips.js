@@ -225,7 +225,7 @@ const FilterChips = (() => {
         const values = readSelectedValues(sourceEl, field);
         renderChips(targetEl, field, values);
         
-        // Hide/show placeholder based on whether filters are selected
+        // Hide/show placeholder and filter-clear based on whether filters are selected
         const dropdown = sourceEl.closest('.w-dropdown');
         if (dropdown) {
           const placeholder = dropdown.querySelector('.select-placeholder');
@@ -236,6 +236,16 @@ const FilterChips = (() => {
               placeholder.style.display = '';
             }
           }
+          
+          // Show/hide filter-clear elements based on whether filters are selected
+          const filterClearElements = dropdown.querySelectorAll('.filter-clear');
+          filterClearElements.forEach((el) => {
+            if (values.length > 0) {
+              el.style.display = '';
+            } else {
+              el.style.display = 'none';
+            }
+          });
         }
       });
     };
