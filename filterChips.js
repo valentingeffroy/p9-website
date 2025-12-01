@@ -280,21 +280,13 @@ const FilterChips = (() => {
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('   🖱️  Close button clicked:', closeBtn);
-        
         const dropdown = closeBtn.closest('.w-dropdown');
-        console.log('   🔍 Closest .w-dropdown found:', dropdown);
-        
         if (!dropdown) {
-          console.warn('   ⚠️  No dropdown found for close button');
           return;
         }
 
         const toggle = dropdown.querySelector('.w-dropdown-toggle');
-        console.log('   🔍 Toggle found:', toggle);
-        
         if (!toggle) {
-          console.warn('   ⚠️  No toggle found in dropdown');
           return;
         }
 
@@ -307,13 +299,33 @@ const FilterChips = (() => {
           }
         }
 
-        // Simple click with a small delay - this is what actually works
-        // The delay allows Webflow's event handlers to process properly
-        console.log('   🖱️  Clicking on toggle:', toggle);
-        setTimeout(() => {
+        // Fire a realistic sequence of native events on the toggle
+        const fire = (type, Ctor = MouseEvent, extra = {}) => {
+          toggle.dispatchEvent(new Ctor(type, { bubbles: true, cancelable: true, ...extra }));
+        };
+
+        try {
+          if (window.PointerEvent) {
+            fire('pointerdown', PointerEvent);
+            fire('pointerup', PointerEvent);
+          }
+          fire('mousedown');
+          fire('mouseup');
+          // Native .click() triggers Webflow's native listeners
           toggle.click();
-          console.log('   ✅ click() called');
-        }, 10);
+        } catch (err) {
+          // Fallback: just click
+          toggle.click();
+        }
+
+        // Second attempt if first one didn't work
+        requestAnimationFrame(() => {
+          const list = dropdown.querySelector('.w-dropdown-list');
+          const stillOpen = toggle.classList.contains('w--open') || (list && list.classList.contains('w--open'));
+          if (stillOpen) {
+            setTimeout(() => toggle.click(), 40);
+          }
+        });
       });
     });
 
