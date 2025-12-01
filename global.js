@@ -21,16 +21,11 @@ const GlobalSite = (() => {
       return;
     }
 
-    // Selectors
-    const TOGGLE_BTN = '.nav_cta-block';
-    const CLOSE_BTN = '.nav_cta-block-close';
-    const PANEL = '.navbar_menu-wrapper-side';
-    const LINKS = '.navbar_link';
-    const LOGO = '.navbar_branding-logo';
-
-    // Breakpoint helper (Webflow tablet and below)
-    const mq = window.matchMedia('(max-width: 991px)');
-    const isTablet = () => mq.matches;
+    // Selectors basés sur les attributs
+    const TOGGLE_BTN = '[navbar="icon"]';
+    const CLOSE_BTN = '[navbar="menu"] .navbar1_menu-button';
+    const PANEL = '[navbar="menu"]';
+    const LINKS = '.navbar1_link';
 
     // Build a paused timeline for link reveal (top -> bottom)
     const linkEls = gsap.utils.toArray(LINKS);
@@ -45,10 +40,10 @@ const GlobalSite = (() => {
       defaults: { ease: 'power3.out' }
     });
 
-    // Set initial state
+    // Set initial state for links
     gsap.set(linkEls, { yPercent: 120, autoAlpha: 0 });
 
-    // Smooth reveal: slide up + fade, top-to-bottom, total stagger ~1s
+    // Smooth reveal: slide up + fade, top-to-bottom, avec stagger
     tl.to(linkEls, {
       yPercent: 0,
       autoAlpha: 1,
@@ -56,25 +51,23 @@ const GlobalSite = (() => {
       stagger: { amount: 0.5, from: 'start' } // ~1s total across all items
     }, 0);
 
-    // Helpers for panel/branding transitions
+    // Helpers for panel transitions
     const openPanel = () => {
-      if (isTablet()) {
-        gsap.to(PANEL, { y: '0%', duration: 0.3, ease: 'power2.out' });
-        gsap.to(LOGO, { color: 'white', duration: 0.3, ease: 'power2.out' });
-      } else {
-        // Désactiver l'animation x (move right) - positionner directement sans transition
-        gsap.set(PANEL, { x: '0%' });
-      }
+      // Translate de 100% à 0% en 300ms
+      gsap.to(PANEL, { 
+        x: '0%', 
+        duration: 0.3, 
+        ease: 'power2.out' 
+      });
     };
 
     const closePanel = () => {
-      if (isTablet()) {
-        gsap.to(PANEL, { y: '-100%', duration: 0.3, ease: 'power2.in' });
-        gsap.to(LOGO, { color: 'black', duration: 0.3, ease: 'power2.out' });
-      } else {
-        // Désactiver l'animation x (move right) - positionner directement sans transition
-        gsap.set(PANEL, { x: '100%' });
-      }
+      // Translate de 0% à 100% en 300ms
+      gsap.to(PANEL, { 
+        x: '100%', 
+        duration: 0.3, 
+        ease: 'power2.in' 
+      });
     };
 
     // Function to open menu
@@ -169,18 +162,6 @@ const GlobalSite = (() => {
 
       closeMenu();
     });
-
-    // Keep behavior in sync when viewport crosses breakpoint
-    if (mq.addEventListener) {
-      mq.addEventListener('change', () => {
-        // If menu is open and breakpoint changed, nudge panel to correct axis
-        const isOpen = $(TOGGLE_BTN).hasClass('clicked');
-        if (!isOpen) return;
-
-        // Instantly set correct axis position without re-playing the reveal
-        gsap.set(PANEL, { x: '0%', y: '0%' });
-      });
-    }
 
     console.log('   ✓ Menu animation initialized');
   }
