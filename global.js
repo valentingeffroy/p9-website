@@ -27,8 +27,18 @@ const GlobalSite = (() => {
     const PANEL = '[navbar="menu"]';
     const LINKS = '.navbar1_link';
 
+    // Vérifier que les éléments sont trouvés
+    const $toggleBtn = $(TOGGLE_BTN);
+    const $panel = $(PANEL);
+    const $closeBtn = $(CLOSE_BTN);
+    
+    console.log('   🔍 Debug - Toggle button found:', $toggleBtn.length, $toggleBtn);
+    console.log('   🔍 Debug - Panel found:', $panel.length, $panel);
+    console.log('   🔍 Debug - Close button found:', $closeBtn.length, $closeBtn);
+
     // Build a paused timeline for link reveal (top -> bottom)
     const linkEls = gsap.utils.toArray(LINKS);
+    console.log('   🔍 Debug - Links found:', linkEls.length, linkEls);
     if (linkEls.length === 0) {
       console.warn('   ⚠️  No menu links found');
       return;
@@ -53,26 +63,32 @@ const GlobalSite = (() => {
 
     // Helpers for panel transitions
     const openPanel = () => {
+      console.log('   📂 openPanel() called');
       // Translate de 100% à 0% en 300ms
       gsap.to(PANEL, { 
         x: '0%', 
         duration: 0.3, 
         ease: 'power2.out' 
       });
+      console.log('   📂 Panel animation started (x: 0%)');
     };
 
     const closePanel = () => {
+      console.log('   📂 closePanel() called');
       // Translate de 0% à 100% en 300ms
       gsap.to(PANEL, { 
         x: '100%', 
         duration: 0.3, 
         ease: 'power2.in' 
       });
+      console.log('   📂 Panel animation started (x: 100%)');
     };
 
     // Function to open menu
     const openMenu = () => {
+      console.log('   🟢 openMenu() called');
       const $btn = $(TOGGLE_BTN);
+      console.log('   🟢 Toggle button element:', $btn.length, $btn);
       
       // Reset timeline to start
       tl.progress(0);
@@ -85,19 +101,24 @@ const GlobalSite = (() => {
       
       // Play link reveal
       tl.play();
+      console.log('   🟢 Timeline played');
       
       $btn.addClass('clicked');
+      console.log('   🟢 Added "clicked" class to toggle button');
     };
 
     // Function to close menu
     const closeMenu = () => {
+      console.log('   🔴 closeMenu() called');
       const $btn = $(TOGGLE_BTN);
       
       // Reverse link reveal smoothly
       tl.eventCallback('onReverseComplete', () => {
+        console.log('   🔴 Timeline reverse complete');
         // After links hide, slide panel out
         closePanel();
         $btn.removeClass('clicked');
+        console.log('   🔴 Removed "clicked" class from toggle button');
         
         // Reset callback to avoid duplicates
         tl.eventCallback('onReverseComplete', null);
@@ -108,28 +129,40 @@ const GlobalSite = (() => {
       });
       
       tl.reverse();
+      console.log('   🔴 Timeline reversed');
     };
 
     // Toggle function for toggle button
     const toggleMenu = (e) => {
+      console.log('   🖱️  toggleMenu() called - Click detected!', e);
       e.preventDefault();
       e.stopPropagation();
 
       // Debounce rapid clicks while animating
-      if (gsap.isTweening(PANEL)) return;
+      const isTweening = gsap.isTweening(PANEL);
+      console.log('   🖱️  Is panel tweening?', isTweening);
+      if (isTweening) {
+        console.log('   🖱️  Panel is animating, ignoring click');
+        return;
+      }
 
       const $btn = $(TOGGLE_BTN);
       const isOpen = $btn.hasClass('clicked');
+      console.log('   🖱️  Menu is open?', isOpen);
 
       if (isOpen) {
+        console.log('   🖱️  Closing menu...');
         closeMenu();
       } else {
+        console.log('   🖱️  Opening menu...');
         openMenu();
       }
     };
 
     // Click handler on toggle button
+    console.log('   🔗 Attaching click handler to:', TOGGLE_BTN);
     $(document).off('click.menuAnimation', TOGGLE_BTN).on('click.menuAnimation', TOGGLE_BTN, toggleMenu);
+    console.log('   🔗 Click handler attached');
 
     // Click handler on close button
     $(document).off('click.menuAnimation', CLOSE_BTN).on('click.menuAnimation', CLOSE_BTN, (e) => {
