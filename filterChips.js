@@ -189,12 +189,22 @@ const FilterChips = (() => {
 
   /**
    * Move chip container outside dropdown toggle for proper display
+   * Target is now inside .filter_dropdown-toggle-left, so we don't need to relocate
    */
   function relocateTargetOutsideToggle(targetEl) {
-    const toggle = targetEl.closest('.w-dropdown-toggle');
-    if (!toggle) return;
-    if (toggle.previousElementSibling === targetEl) return;
-    toggle.parentNode.insertBefore(targetEl, toggle);
+    // Target is now inside .filter_dropdown-toggle-left, no relocation needed
+    // But we can ensure it's in the right place if needed
+    const toggleLeft = targetEl.closest('.filter_dropdown-toggle-left');
+    if (!toggleLeft) {
+      // If not in toggle-left, try to find it and move it there
+      const dropdown = targetEl.closest('.w-dropdown');
+      if (dropdown) {
+        const toggleLeft = dropdown.querySelector('.filter_dropdown-toggle-left');
+        if (toggleLeft && !toggleLeft.contains(targetEl)) {
+          toggleLeft.appendChild(targetEl);
+        }
+      }
+    }
   }
 
   // ========================================================================
@@ -238,7 +248,8 @@ const FilterChips = (() => {
           }
           
           // Show/hide filter-clear elements based on whether filters are selected
-          const filterClearElements = dropdown.querySelectorAll('.filter-clear');
+          // Use fs-list-element="clear" with matching fs-list-field
+          const filterClearElements = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${field}"]`);
           filterClearElements.forEach((el) => {
             if (values.length > 0) {
               el.style.display = '';
@@ -269,6 +280,42 @@ const FilterChips = (() => {
 
     // Initial render
     schedule();
+  }
+
+  // ========================================================================
+  // CLEAR FILTERS HANDLER
+  // ========================================================================
+
+  /**
+   * Initialize clear filter button handlers
+   * Clears all selected filters for a specific field when [fs-list-element="clear"] is clicked
+   */
+  function initClearFilterHandlers() {
+    // Use event delegation to handle dynamically added elements
+    document.addEventListener('click', (e) => {
+      const clearBtn = e.target.closest('[fs-list-element="clear"]');
+      if (!clearBtn) return;
+
+      const field = clearBtn.getAttribute('fs-list-field');
+      if (!field) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Find all checked inputs for this field and uncheck them
+      const sourceEl = document.querySelector(`[tag-container="${field}"]`);
+      if (!sourceEl) return;
+
+      const checkedInputs = sourceEl.querySelectorAll(
+        `input[fs-list-field="${field}"][type="checkbox"]:checked, input[fs-list-field="${field}"][type="radio"]:checked`
+      );
+
+      checkedInputs.forEach((input) => {
+        if (input.checked || input.getAttribute('aria-checked') === 'true') {
+          Utils.clickInputOrLabel(input);
+        }
+      });
+    });
   }
 
   // ========================================================================
@@ -352,6 +399,7 @@ const FilterChips = (() => {
   function init() {
     console.log('🚀 FilterChips.init() called');
     GROUPS.forEach(wireGroup);
+    initClearFilterHandlers();
     initCloseDropdownHandlers();
     console.log('✅ FilterChips initialized');
   }
