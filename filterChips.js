@@ -139,12 +139,20 @@ const FilterChips = (() => {
    * Handles "+N more" aggregation when multiple filters selected
    */
   function renderChips(targetEl, field, values) {
+    // Save placeholder before clearing innerHTML
+    const placeholder = targetEl.querySelector('.select-placeholder');
+    const placeholderClone = placeholder ? placeholder.cloneNode(true) : null;
+    
     targetEl.innerHTML = '';
 
-    // No filters: remove accessibility attributes
+    // No filters: remove accessibility attributes and restore placeholder
     if (!values || values.length === 0) {
       targetEl.removeAttribute('aria-label');
       targetEl.removeAttribute('role');
+      // Restore placeholder if it existed
+      if (placeholderClone) {
+        targetEl.appendChild(placeholderClone);
+      }
       return;
     }
 
