@@ -302,8 +302,10 @@ const FilterChips = (() => {
         if (typeof toggle.focus === 'function') {
           try {
             toggle.focus({ preventScroll: true });
+            console.log('   ✅ Focus set on toggle');
           } catch (_) {
             toggle.focus();
+            console.log('   ✅ Focus set on toggle (fallback)');
           }
         }
 
@@ -315,23 +317,30 @@ const FilterChips = (() => {
         try {
           if (window.PointerEvent) {
             fire('pointerdown', PointerEvent);
+            console.log('   ✅ pointerdown fired');
             fire('pointerup', PointerEvent);
+            console.log('   ✅ pointerup fired');
           }
           fire('mousedown');
+          console.log('   ✅ mousedown fired');
           fire('mouseup');
+          console.log('   ✅ mouseup fired');
           // Native .click() triggers Webflow's native listeners
           console.log('   🖱️  Clicking on toggle:', toggle);
           toggle.click();
+          console.log('   ✅ click() called');
         } catch (err) {
           // Fallback: just click
           console.log('   🖱️  Clicking on toggle (fallback):', toggle);
           toggle.click();
         }
 
-        // Second attempt if first one didn't work
+        // Check immediately after events
         requestAnimationFrame(() => {
           const list = dropdown.querySelector('.w-dropdown-list');
           const stillOpen = toggle.classList.contains('w--open') || (list && list.classList.contains('w--open'));
+          console.log('   🔍 Still open after events?', stillOpen);
+          
           if (stillOpen) {
             console.log('   🖱️  Second click attempt on toggle:', toggle);
             setTimeout(() => toggle.click(), 40);
