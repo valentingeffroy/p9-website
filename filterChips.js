@@ -243,7 +243,8 @@ const FilterChips = (() => {
             if (values.length > 0) {
               placeholder.style.display = 'none';
             } else {
-              placeholder.style.display = '';
+              // Remove inline display style completely to restore default CSS
+              placeholder.style.removeProperty('display');
             }
           }
           
