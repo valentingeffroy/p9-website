@@ -96,6 +96,7 @@ const GlobalSite = (() => {
     console.log('   🌑 Initializing navbar shadow...');
 
     const NAVBAR = '.navbar1_component';
+    const HIDE_DELAY = 1000; // Linger for 1s after scroll stops (like original code)
 
     const navbar = document.querySelector(NAVBAR);
 
@@ -106,57 +107,47 @@ const GlobalSite = (() => {
 
     console.log('   ✓ Navbar found:', navbar);
 
-    // Use IntersectionObserver to detect when navbar top touches viewport top
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const top = entry.boundingClientRect.top;
-          const isIntersecting = entry.isIntersecting;
-          
-          console.log('   📊 IntersectionObserver:', {
-            isIntersecting,
-            top,
-            shouldAddShadow: isIntersecting && top <= 0
-          });
+    let isActive = false; // true only after navbar top touches viewport top
+    let hideTimer = null;
 
-          if (isIntersecting && top <= 0) {
-            // Navbar top is at or above viewport top - add shadow
-            navbar.classList.add('is-shadow');
-            console.log('   ✅ Added .is-shadow class');
-          } else {
-            // Navbar top is below viewport top - remove shadow
-            navbar.classList.remove('is-shadow');
-            console.log('   ❌ Removed .is-shadow class');
-          }
-        });
-      },
-      {
-        root: null, // viewport
-        rootMargin: '0px',
-        threshold: [0, 0.1, 0.5, 1] // Multiple thresholds for better detection
-      }
-    );
+    // Helper to show shadow + schedule hide after delay of no scroll
+    const bumpVisibility = () => {
+      navbar.classList.add('is-shadow');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        if (isActive) {
+          navbar.classList.remove('is-shadow');
+        }
+      }, HIDE_DELAY);
+    };
 
-    // Observe the navbar
-    observer.observe(navbar);
-    console.log('   ✓ Observer attached to navbar');
-
-    // Also check on scroll as a fallback
-    let lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    window.addEventListener('scroll', () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    // Check if navbar is at top of viewport
+    const checkNavbarPosition = () => {
       const navbarRect = navbar.getBoundingClientRect();
       const isAtTop = navbarRect.top <= 0;
 
-      if (isAtTop && !navbar.classList.contains('is-shadow')) {
-        navbar.classList.add('is-shadow');
-        console.log('   ✅ Added .is-shadow class (scroll fallback)');
-      } else if (!isAtTop && navbar.classList.contains('is-shadow')) {
+      if (isAtTop && !isActive) {
+        // Navbar just reached top - activate
+        isActive = true;
+        console.log('   ✅ Navbar reached top - activating shadow');
+      } else if (!isAtTop && isActive) {
+        // Navbar moved above top - deactivate
+        isActive = false;
+        clearTimeout(hideTimer);
         navbar.classList.remove('is-shadow');
-        console.log('   ❌ Removed .is-shadow class (scroll fallback)');
+        console.log('   ❌ Navbar above top - deactivating shadow');
       }
+    };
 
-      lastScrollTop = scrollTop;
+    // Initial check
+    checkNavbarPosition();
+
+    // Scroll listener: only runs while active, shows shadow on scroll
+    window.addEventListener('scroll', () => {
+      checkNavbarPosition();
+      if (isActive) {
+        bumpVisibility();
+      }
     }, { passive: true });
 
     console.log('   ✓ Navbar shadow initialized');
