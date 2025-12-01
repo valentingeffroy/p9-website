@@ -139,24 +139,12 @@ const FilterChips = (() => {
    * Handles "+N more" aggregation when multiple filters selected
    */
   function renderChips(targetEl, field, values) {
-    // Find placeholder in parent container (filter_dropdown-toggle-left) before clearing
-    const parentContainer = targetEl.closest('.filter_dropdown-toggle-left') || targetEl.parentElement;
-    const placeholder = parentContainer ? parentContainer.querySelector('.select-placeholder') : null;
-    const placeholderClone = placeholder ? placeholder.cloneNode(true) : null;
-    
     targetEl.innerHTML = '';
 
-    // No filters: remove accessibility attributes and restore placeholder
+    // No filters: remove accessibility attributes
     if (!values || values.length === 0) {
       targetEl.removeAttribute('aria-label');
       targetEl.removeAttribute('role');
-      // Restore placeholder in parent container if it existed
-      if (placeholderClone && parentContainer) {
-        // Check if placeholder doesn't already exist
-        if (!parentContainer.querySelector('.select-placeholder')) {
-          parentContainer.appendChild(placeholderClone);
-        }
-      }
       return;
     }
 
@@ -247,16 +235,26 @@ const FilterChips = (() => {
         const values = readSelectedValues(sourceEl, field);
         renderChips(targetEl, field, values);
         
-        // Hide/show placeholder and filter-clear based on whether filters are selected
+        // Show/hide placeholder and target based on whether filters are selected
         const dropdown = sourceEl.closest('.w-dropdown');
         if (dropdown) {
-          const placeholder = dropdown.querySelector('.select-placeholder');
-          if (placeholder) {
+          const toggle = dropdown.querySelector('.w-dropdown-toggle');
+          if (toggle) {
+            const placeholder = toggle.querySelector('.select-placeholder');
+            
             if (values.length > 0) {
-              placeholder.style.display = 'none';
+              // Show target, hide placeholder
+              targetEl.style.display = 'flex';
+              if (placeholder) {
+                placeholder.style.display = 'none';
+              }
             } else {
-              // Remove inline display style completely to restore default CSS
-              placeholder.style.removeProperty('display');
+              // Hide target, show placeholder
+              targetEl.style.display = 'none';
+              if (placeholder) {
+                placeholder.style.display = '';
+                placeholder.style.removeProperty('display');
+              }
             }
           }
           
