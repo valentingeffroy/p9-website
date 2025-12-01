@@ -287,8 +287,9 @@ const FilterChips = (() => {
         }
         
         // Show/hide filter-clear elements in this dropdown based on whether filters are selected
-        // Use fs-list-element="clear" with matching fs-list-field
-        const filterClearElements = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${field}"]`);
+        // Find all clear elements in this dropdown (regardless of fs-list-field value)
+        // This handles cases where fs-list-field doesn't match the field (e.g., fs-list-field="tags" for all dropdowns)
+        const filterClearElements = dropdown.querySelectorAll('[fs-list-element="clear"]');
         filterClearElements.forEach((el) => {
           if (values.length > 0) {
             el.style.display = '';
