@@ -203,52 +203,69 @@ const Tooltips = (() => {
 
     // ========================================================================
     // SETUP: Wire sources to update content and activate tooltip
+    // Use event delegation to handle dynamically added elements
     // ========================================================================
-    const sources = document.querySelectorAll('[tooltip="source"]');
     
-    // console.log(`   📍 Found ${sources.length} source element(s)`);
-    
-    sources.forEach((source) => {
-      const sourceImageCheck = source.querySelector('[tooltip="image"]');
-      const sourceParagraphCheck = source.querySelector('[tooltip="paragraph"]');
-      // console.log('   Source [tooltip="image"] found:', !!sourceImageCheck);
-      // console.log('   Source [tooltip="paragraph"] found:', !!sourceParagraphCheck);
+    // Use event delegation with mouseover/mouseout (they bubble, unlike mouseenter/mouseleave)
+    // This works for elements added before or after script initialization
+    document.addEventListener('mouseover', (e) => {
+      // Find the closest [tooltip="source"] element (works even if hovering a child)
+      const source = e.target.closest('[tooltip="source"]');
+      if (!source) return;
 
-      // Activate tooltip when hovering source
-      source.addEventListener('mouseenter', () => {
-        // console.log('🖱️  mouseenter on source:', source);
-        // console.log('   tooltip found:', !!tooltip);
-        
-        // Annuler tout masquage en cours
-        if (hideTimeout) {
-          clearTimeout(hideTimeout);
-          hideTimeout = null;
-        }
-        
-        // Update content before showing
-        updateTooltipContent(tooltip, source);
-        
-        isActive = true;
-        currentSource = source;
-        
-        // Show tooltip (l'opacité va remonter si elle était en train de baisser)
-        showTooltip();
-        // console.log('   ✅ Tooltip shown');
-        
-        // Immediately position tooltip if we have a last known mouse position
-        if (lastMouseX !== null && lastMouseY !== null) {
-          updateTooltip(lastMouseX, lastMouseY);
-        }
-      });
+      // Check if we're already on this source (avoid re-triggering when moving inside)
+      if (currentSource === source) return;
 
-      // Deactivate tooltip when leaving source
-      source.addEventListener('mouseleave', () => {
-        isActive = false;
-        currentSource = null;
-        
-        // Hide tooltip (commence la transition d'opacité)
-        hideTooltip();
-      });
+      // Check if we're entering from outside (not from a child)
+      const relatedTarget = e.relatedTarget;
+      if (relatedTarget && source.contains(relatedTarget)) {
+        return; // Moving from child to parent, not entering
+      }
+
+      // console.log('🖱️  mouseover on source:', source);
+      // console.log('   tooltip found:', !!tooltip);
+      
+      // Annuler tout masquage en cours
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+      
+      // Update content before showing
+      updateTooltipContent(tooltip, source);
+      
+      isActive = true;
+      currentSource = source;
+      
+      // Show tooltip (l'opacité va remonter si elle était en train de baisser)
+      showTooltip();
+      // console.log('   ✅ Tooltip shown');
+      
+      // Immediately position tooltip if we have a last known mouse position
+      if (lastMouseX !== null && lastMouseY !== null) {
+        updateTooltip(lastMouseX, lastMouseY);
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      // Find the closest [tooltip="source"] element
+      const source = e.target.closest('[tooltip="source"]');
+      if (!source) return;
+
+      // Check if we're actually leaving the source (not just moving to a child)
+      const relatedTarget = e.relatedTarget;
+      if (relatedTarget && source.contains(relatedTarget)) {
+        return; // Still inside the source element
+      }
+
+      // Only hide if this was the active source
+      if (currentSource !== source) return;
+
+      isActive = false;
+      currentSource = null;
+      
+      // Hide tooltip (commence la transition d'opacité)
+      hideTooltip();
     });
 
     // ========================================================================
