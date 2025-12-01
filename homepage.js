@@ -7,38 +7,15 @@ console.log('══════════════════════�
 console.log('🏠 HOME PAGE SCRIPT LOADING');
 console.log('═════════════════════════════════════════════════════════════');
 
-/**
- * Wait for a module to be available before initializing
- */
-function waitForModule(moduleName, callback, maxAttempts = 50, interval = 100) {
-  let attempts = 0;
-  const checkModule = () => {
-    if (typeof window[moduleName] !== 'undefined') {
-      callback();
-    } else {
-      attempts++;
-      if (attempts < maxAttempts) {
-        setTimeout(checkModule, interval);
-      } else {
-        console.error(`   ❌ ${moduleName} module not loaded after ${maxAttempts * interval}ms`);
-      }
-    }
-  };
-  checkModule();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   console.log('📍 DOMContentLoaded event fired');
 
-  // Wait for GlobalSite to be loaded
-  waitForModule('GlobalSite', () => {
-    try {
-      console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
-      GlobalSite.init();
-    } catch (e) {
-      console.error('   ❌ Error in GlobalSite.init():', e);
-    }
-  });
+  try {
+    console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
+    GlobalSite.init();
+  } catch (e) {
+    console.error('   ❌ Error in GlobalSite.init():', e);
+  }
 
   try {
     console.log('2️⃣  Initializing Tooltips...');
