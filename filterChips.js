@@ -287,6 +287,7 @@ const FilterChips = (() => {
         }
 
         // Simulate click on dropdown to close it (uses Webflow's native behavior)
+        console.log('   🖱️  Clicking on:', dropdown);
         dropdown.click();
 
         // Second attempt if first one didn't work
@@ -295,6 +296,7 @@ const FilterChips = (() => {
           const list = dropdown.querySelector('.w-dropdown-list');
           const stillOpen = (toggle && toggle.classList.contains('w--open')) || (list && list.classList.contains('w--open'));
           if (stillOpen) {
+            console.log('   🖱️  Second click attempt on:', dropdown);
             setTimeout(() => dropdown.click(), 40);
           }
         });
