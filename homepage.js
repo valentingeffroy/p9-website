@@ -5,7 +5,6 @@
 
 // Load required modules
 //= require utils.js
-//= require global.js
 //= require tooltips.js
 //= require vimeoLightbox.js
 
@@ -18,7 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   try {
     console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
-    GlobalSite.init();
+    if (typeof GlobalSite !== 'undefined') {
+      GlobalSite.init();
+    } else {
+      console.error('   ❌ GlobalSite module not loaded!');
+      console.error('   📝 Make sure to load global.js BEFORE homepage.js in your HTML:');
+      console.error('   <script src="https://cdn.jsdelivr.net/gh/USERNAME/REPO@main/src/global.js"></script>');
+      console.error('   <script src="https://cdn.jsdelivr.net/gh/USERNAME/REPO@main/src/homepage.js"></script>');
+    }
   } catch (e) {
     console.error('   ❌ Error in GlobalSite.init():', e);
   }

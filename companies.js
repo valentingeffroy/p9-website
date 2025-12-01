@@ -5,7 +5,6 @@
 
 // Load required modules
 //= require utils.js
-//= require global.js
 //= require filterChips.js
 //= require tooltips.js
 
