@@ -216,14 +216,12 @@ const FilterChips = (() => {
    * Handles multiple dropdowns with the same field
    */
   function wireGroup({ field, sourceSel, targetSel }) {
-    // Find all source and target elements (can be multiple dropdowns)
+    // Find all source elements (can be multiple dropdowns)
     const sourceElements = document.querySelectorAll(sourceSel);
-    const targetElements = document.querySelectorAll(targetSel);
 
-    if (sourceElements.length === 0 || targetElements.length === 0) {
-      console.warn(`   ⚠️  Missing elements for field "${field}"`, { 
-        sourceCount: sourceElements.length, 
-        targetCount: targetElements.length 
+    if (sourceElements.length === 0) {
+      console.warn(`   ⚠️  Missing source elements for field "${field}"`, { 
+        sourceCount: sourceElements.length
       });
       return;
     }
@@ -234,8 +232,18 @@ const FilterChips = (() => {
       if (!dropdown) return;
 
       // Find the target element in the same dropdown
-      const targetEl = dropdown.querySelector(targetSel);
-      if (!targetEl) return;
+      // First try the specific selector, then try any target element in the dropdown
+      // This handles cases where target="tags" is used for all dropdowns
+      let targetEl = dropdown.querySelector(targetSel);
+      if (!targetEl) {
+        // Fallback: find any target element in the dropdown (in case target attribute doesn't match field)
+        // This is needed when HTML has target="tags" for all dropdowns
+        targetEl = dropdown.querySelector('[target]');
+      }
+      if (!targetEl) {
+        console.warn(`   ⚠️  No target element found in dropdown for field "${field}"`);
+        return;
+      }
 
       console.log(`   🔗 Wiring filter group: ${field} (found in dropdown)`);
 
