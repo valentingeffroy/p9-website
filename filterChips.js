@@ -302,50 +302,18 @@ const FilterChips = (() => {
         if (typeof toggle.focus === 'function') {
           try {
             toggle.focus({ preventScroll: true });
-            console.log('   ✅ Focus set on toggle');
           } catch (_) {
             toggle.focus();
-            console.log('   ✅ Focus set on toggle (fallback)');
           }
         }
 
-        // Fire a realistic sequence of native events on the toggle
-        const fire = (type, Ctor = MouseEvent, extra = {}) => {
-          toggle.dispatchEvent(new Ctor(type, { bubbles: true, cancelable: true, ...extra }));
-        };
-
-        try {
-          if (window.PointerEvent) {
-            fire('pointerdown', PointerEvent);
-            console.log('   ✅ pointerdown fired');
-            fire('pointerup', PointerEvent);
-            console.log('   ✅ pointerup fired');
-          }
-          fire('mousedown');
-          console.log('   ✅ mousedown fired');
-          fire('mouseup');
-          console.log('   ✅ mouseup fired');
-          // Native .click() triggers Webflow's native listeners
-          console.log('   🖱️  Clicking on toggle:', toggle);
+        // Simple click with a small delay - this is what actually works
+        // The delay allows Webflow's event handlers to process properly
+        console.log('   🖱️  Clicking on toggle:', toggle);
+        setTimeout(() => {
           toggle.click();
           console.log('   ✅ click() called');
-        } catch (err) {
-          // Fallback: just click
-          console.log('   🖱️  Clicking on toggle (fallback):', toggle);
-          toggle.click();
-        }
-
-        // Check immediately after events
-        requestAnimationFrame(() => {
-          const list = dropdown.querySelector('.w-dropdown-list');
-          const stillOpen = toggle.classList.contains('w--open') || (list && list.classList.contains('w--open'));
-          console.log('   🔍 Still open after events?', stillOpen);
-          
-          if (stillOpen) {
-            console.log('   🖱️  Second click attempt on toggle:', toggle);
-            setTimeout(() => toggle.click(), 40);
-          }
-        });
+        }, 10);
       });
     });
 
