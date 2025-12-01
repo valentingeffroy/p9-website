@@ -16,6 +16,8 @@ const GlobalSite = (() => {
 
     const MENU_BUTTON = '.navbar1_menu-button.w-nav-button';
     const LINKS = '.navbar1_link';
+    const DELAY_BEFORE_ANIMATION = 300; // Délai avant de commencer l'animation (ms)
+    const STAGGER_DELAY = 100; // Délai entre chaque lien (ms)
 
     // Get menu button and links
     const menuButton = document.querySelector(MENU_BUTTON);
@@ -46,7 +48,7 @@ const GlobalSite = (() => {
         setTimeout(() => {
           link.style.opacity = '1';
           link.style.transform = 'translateY(0)';
-        }, index * 50); // 50ms stagger between each link
+        }, index * STAGGER_DELAY);
       });
     }
 
@@ -65,10 +67,10 @@ const GlobalSite = (() => {
           const hasOpenClass = menuButton.classList.contains('w--open');
           
           if (hasOpenClass) {
-            // Wait 400ms then animate links in
+            // Wait DELAY_BEFORE_ANIMATION then animate links in
             setTimeout(() => {
               animateLinksIn();
-            }, 400);
+            }, DELAY_BEFORE_ANIMATION);
           } else {
             // Reset links when menu closes
             resetLinks();
