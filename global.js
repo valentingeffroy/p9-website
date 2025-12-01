@@ -104,28 +104,60 @@ const GlobalSite = (() => {
       return;
     }
 
+    console.log('   ✓ Navbar found:', navbar);
+
     // Use IntersectionObserver to detect when navbar top touches viewport top
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.boundingClientRect.top <= 0) {
+          const top = entry.boundingClientRect.top;
+          const isIntersecting = entry.isIntersecting;
+          
+          console.log('   📊 IntersectionObserver:', {
+            isIntersecting,
+            top,
+            shouldAddShadow: isIntersecting && top <= 0
+          });
+
+          if (isIntersecting && top <= 0) {
             // Navbar top is at or above viewport top - add shadow
             navbar.classList.add('is-shadow');
+            console.log('   ✅ Added .is-shadow class');
           } else {
             // Navbar top is below viewport top - remove shadow
             navbar.classList.remove('is-shadow');
+            console.log('   ❌ Removed .is-shadow class');
           }
         });
       },
       {
         root: null, // viewport
         rootMargin: '0px',
-        threshold: 0 // Trigger as soon as any part enters
+        threshold: [0, 0.1, 0.5, 1] // Multiple thresholds for better detection
       }
     );
 
     // Observe the navbar
     observer.observe(navbar);
+    console.log('   ✓ Observer attached to navbar');
+
+    // Also check on scroll as a fallback
+    let lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const navbarRect = navbar.getBoundingClientRect();
+      const isAtTop = navbarRect.top <= 0;
+
+      if (isAtTop && !navbar.classList.contains('is-shadow')) {
+        navbar.classList.add('is-shadow');
+        console.log('   ✅ Added .is-shadow class (scroll fallback)');
+      } else if (!isAtTop && navbar.classList.contains('is-shadow')) {
+        navbar.classList.remove('is-shadow');
+        console.log('   ❌ Removed .is-shadow class (scroll fallback)');
+      }
+
+      lastScrollTop = scrollTop;
+    }, { passive: true });
 
     console.log('   ✓ Navbar shadow initialized');
   }
