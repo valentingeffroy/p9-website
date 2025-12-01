@@ -63,20 +63,28 @@ const Tooltips = (() => {
     // console.log('   targetImage:', targetImage);
     // console.log('   targetParagraph:', targetParagraph);
 
-    // Copy image
-    if (sourceImage && targetImage) {
-      const src = sourceImage.getAttribute('src');
-      const alt = sourceImage.getAttribute('alt') || '';
-      // console.log('   📸 Copying image - src:', src, 'alt:', alt);
-      if (src) {
-        targetImage.setAttribute('src', src);
-        targetImage.setAttribute('alt', alt);
-        // console.log('   ✅ Image copied');
+    // Copy image or hide if no source image
+    if (targetImage) {
+      if (sourceImage) {
+        const src = sourceImage.getAttribute('src');
+        const alt = sourceImage.getAttribute('alt') || '';
+        // console.log('   📸 Copying image - src:', src, 'alt:', alt);
+        if (src) {
+          targetImage.setAttribute('src', src);
+          targetImage.setAttribute('alt', alt);
+          targetImage.style.display = '';
+          // console.log('   ✅ Image copied');
+        } else {
+          targetImage.style.display = 'none';
+          // console.warn('   ⚠️  No src attribute on source image');
+        }
       } else {
-        // console.warn('   ⚠️  No src attribute on source image');
+        // No source image, hide target image
+        targetImage.style.display = 'none';
+        // console.warn('   ⚠️  No sourceImage found, hiding targetImage');
       }
     } else {
-      // console.warn('   ⚠️  Missing sourceImage or targetImage', { sourceImage: !!sourceImage, targetImage: !!targetImage });
+      // console.warn('   ⚠️  Missing targetImage');
     }
 
     // Copy paragraph text
