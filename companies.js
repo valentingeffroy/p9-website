@@ -1,10 +1,11 @@
 /**
  * COMPANIES PAGE
- * Initializes: FilterChips, Tooltips
+ * Initializes: FilterChips, Tooltips, GlobalSite (navbar menu)
  */
 
 // Load required modules
 //= require utils.js
+//= require global.js
 //= require filterChips.js
 //= require tooltips.js
 

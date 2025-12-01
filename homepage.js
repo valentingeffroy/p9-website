@@ -1,10 +1,11 @@
 /**
  * HOME PAGE
- * Initializes: Tooltips + VimeoLightbox
+ * Initializes: Tooltips + VimeoLightbox + GlobalSite (navbar menu)
  */
 
 // Load required modules
 //= require utils.js
+//= require global.js
 //= require tooltips.js
 //= require vimeoLightbox.js
 
