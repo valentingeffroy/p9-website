@@ -17,14 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('📍 DOMContentLoaded event fired');
 
   try {
-    console.log('1️⃣  Initializing Tooltips...');
+    console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
+    GlobalSite.init();
+  } catch (e) {
+    console.error('   ❌ Error in GlobalSite.init():', e);
+  }
+
+  try {
+    console.log('2️⃣  Initializing Tooltips...');
     Tooltips.init();
   } catch (e) {
     console.error('   ❌ Error in Tooltips.init():', e);
   }
 
   try {
-    console.log('2️⃣  Initializing Vimeo Lightbox...');
+    console.log('3️⃣  Initializing Vimeo Lightbox...');
     VimeoLightbox.init();
   } catch (e) {
     console.error('   ❌ Error in VimeoLightbox.init():', e);

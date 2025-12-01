@@ -277,9 +277,6 @@ const GlobalSite = (() => {
     }
   }
 
-  // Auto-initialize when script loads
-  init();
-
   return { init };
 })();
 
