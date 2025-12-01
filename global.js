@@ -5,6 +5,13 @@
  * - Navbar shadow on scroll
  */
 
+// Load GSAP if not already loaded
+if (typeof gsap === 'undefined') {
+  const gsapScript = document.createElement('script');
+  gsapScript.src = 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js';
+  document.head.appendChild(gsapScript);
+}
+
 const GlobalSite = (() => {
   console.log('📦 GlobalSite module loading...');
 
@@ -15,9 +22,9 @@ const GlobalSite = (() => {
   function initMenuAnimation() {
     console.log('   🎬 Initializing menu animation...');
 
-    // Guards: require GSAP & jQuery
-    if (typeof gsap === 'undefined' || typeof $ === 'undefined') {
-      console.warn('   ⚠️  GSAP or jQuery not available, skipping menu animation');
+    // Guards: require GSAP
+    if (typeof gsap === 'undefined') {
+      console.warn('   ⚠️  GSAP not available, skipping menu animation');
       return;
     }
 
@@ -28,13 +35,13 @@ const GlobalSite = (() => {
     const LINKS = '.navbar1_link';
 
     // Vérifier que les éléments sont trouvés
-    const $toggleBtn = $(TOGGLE_BTN);
-    const $panel = $(PANEL);
-    const $closeBtn = $(CLOSE_BTN);
+    const toggleBtn = document.querySelector(TOGGLE_BTN);
+    const panel = document.querySelector(PANEL);
+    const closeBtn = document.querySelector(CLOSE_BTN);
     
-    console.log('   🔍 Debug - Toggle button found:', $toggleBtn.length, $toggleBtn);
-    console.log('   🔍 Debug - Panel found:', $panel.length, $panel);
-    console.log('   🔍 Debug - Close button found:', $closeBtn.length, $closeBtn);
+    console.log('   🔍 Debug - Toggle button found:', !!toggleBtn, toggleBtn);
+    console.log('   🔍 Debug - Panel found:', !!panel, panel);
+    console.log('   🔍 Debug - Close button found:', !!closeBtn, closeBtn);
 
     // Build a paused timeline for link reveal (top -> bottom)
     const linkEls = gsap.utils.toArray(LINKS);
@@ -87,8 +94,8 @@ const GlobalSite = (() => {
     // Function to open menu
     const openMenu = () => {
       console.log('   🟢 openMenu() called');
-      const $btn = $(TOGGLE_BTN);
-      console.log('   🟢 Toggle button element:', $btn.length, $btn);
+      const btn = document.querySelector(TOGGLE_BTN);
+      console.log('   🟢 Toggle button element:', !!btn, btn);
       
       // Reset timeline to start
       tl.progress(0);
@@ -103,21 +110,21 @@ const GlobalSite = (() => {
       tl.play();
       console.log('   🟢 Timeline played');
       
-      $btn.addClass('clicked');
+      if (btn) btn.classList.add('clicked');
       console.log('   🟢 Added "clicked" class to toggle button');
     };
 
     // Function to close menu
     const closeMenu = () => {
       console.log('   🔴 closeMenu() called');
-      const $btn = $(TOGGLE_BTN);
+      const btn = document.querySelector(TOGGLE_BTN);
       
       // Reverse link reveal smoothly
       tl.eventCallback('onReverseComplete', () => {
         console.log('   🔴 Timeline reverse complete');
         // After links hide, slide panel out
         closePanel();
-        $btn.removeClass('clicked');
+        if (btn) btn.classList.remove('clicked');
         console.log('   🔴 Removed "clicked" class from toggle button');
         
         // Reset callback to avoid duplicates
@@ -146,8 +153,8 @@ const GlobalSite = (() => {
         return;
       }
 
-      const $btn = $(TOGGLE_BTN);
-      const isOpen = $btn.hasClass('clicked');
+      const btn = document.querySelector(TOGGLE_BTN);
+      const isOpen = btn && btn.classList.contains('clicked');
       console.log('   🖱️  Menu is open?', isOpen);
 
       if (isOpen) {
@@ -161,34 +168,40 @@ const GlobalSite = (() => {
 
     // Click handler on toggle button
     console.log('   🔗 Attaching click handler to:', TOGGLE_BTN);
-    $(document).off('click.menuAnimation', TOGGLE_BTN).on('click.menuAnimation', TOGGLE_BTN, toggleMenu);
-    console.log('   🔗 Click handler attached');
+    const toggleBtnEl = document.querySelector(TOGGLE_BTN);
+    if (toggleBtnEl) {
+      toggleBtnEl.addEventListener('click', toggleMenu);
+      console.log('   🔗 Click handler attached');
+    }
 
     // Click handler on close button
-    $(document).off('click.menuAnimation', CLOSE_BTN).on('click.menuAnimation', CLOSE_BTN, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const $btn = $(TOGGLE_BTN);
-      if ($btn.hasClass('clicked')) {
-        closeMenu();
-      }
-    });
+    const closeBtnEl = document.querySelector(CLOSE_BTN);
+    if (closeBtnEl) {
+      closeBtnEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const btn = document.querySelector(TOGGLE_BTN);
+        if (btn && btn.classList.contains('clicked')) {
+          closeMenu();
+        }
+      });
+    }
 
     // Close menu when clicking outside
-    $(document).off('click.menuOutside').on('click.menuOutside', (e) => {
-      const $btn = $(TOGGLE_BTN);
-      const isOpen = $btn.hasClass('clicked');
+    document.addEventListener('click', (e) => {
+      const btn = document.querySelector(TOGGLE_BTN);
+      const isOpen = btn && btn.classList.contains('clicked');
       
       if (!isOpen) return;
 
-      const $target = $(e.target);
+      const target = e.target;
       
       // Don't close if clicking on the toggle button, close button, or inside the panel
       if (
-        $target.closest(TOGGLE_BTN).length > 0 ||
-        $target.closest(CLOSE_BTN).length > 0 ||
-        $target.closest(PANEL).length > 0
+        target.closest(TOGGLE_BTN) ||
+        target.closest(CLOSE_BTN) ||
+        target.closest(PANEL)
       ) {
         return;
       }
