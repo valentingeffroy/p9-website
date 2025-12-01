@@ -12,7 +12,7 @@ const FilterChips = (() => {
   // ========================================================================
   const GROUPS = [
     { field: 'tags', sourceSel: '[tag-container="tags"]', targetSel: '[target="tags"]' },
-    { field: 'country', sourceSel: '[tag-container="countries"]', targetSel: '[target="countries"]' },
+    { field: 'countries', sourceSel: '[tag-container="countries"]', targetSel: '[target="countries"]' },
   ];
 
   // ========================================================================
