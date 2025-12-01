@@ -213,18 +213,40 @@ const FilterChips = (() => {
 
   /**
    * Set up complete filter management for a group (tags or countries)
+   * Handles multiple dropdowns with the same field
    */
   function wireGroup({ field, sourceSel, targetSel }) {
-    const sourceEl = document.querySelector(sourceSel);
-    const targetEl = document.querySelector(targetSel);
+    // Find all source and target elements (can be multiple dropdowns)
+    const sourceElements = document.querySelectorAll(sourceSel);
+    const targetElements = document.querySelectorAll(targetSel);
 
-    if (!sourceEl || !targetEl) {
-      console.warn(`   ⚠️  Missing elements for field "${field}"`, { sourceEl, targetEl });
+    if (sourceElements.length === 0 || targetElements.length === 0) {
+      console.warn(`   ⚠️  Missing elements for field "${field}"`, { 
+        sourceCount: sourceElements.length, 
+        targetCount: targetElements.length 
+      });
       return;
     }
 
-    console.log(`   🔗 Wiring filter group: ${field}`);
+    // Match each source with its corresponding target in the same dropdown
+    sourceElements.forEach((sourceEl) => {
+      const dropdown = sourceEl.closest('.w-dropdown');
+      if (!dropdown) return;
 
+      // Find the target element in the same dropdown
+      const targetEl = dropdown.querySelector(targetSel);
+      if (!targetEl) return;
+
+      console.log(`   🔗 Wiring filter group: ${field} (found in dropdown)`);
+
+      wireSingleDropdown({ field, sourceEl, targetEl, dropdown });
+    });
+  }
+
+  /**
+   * Wire a single dropdown for filter management
+   */
+  function wireSingleDropdown({ field, sourceEl, targetEl, dropdown }) {
     relocateTargetOutsideToggle(targetEl);
 
     // Schedule rendering with requestAnimationFrame
@@ -232,43 +254,40 @@ const FilterChips = (() => {
     const schedule = () => {
       if (rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
+        // Read values only from this specific source element
         const values = readSelectedValues(sourceEl, field);
         renderChips(targetEl, field, values);
         
         // Show/hide placeholder and target based on whether filters are selected
-        const dropdown = sourceEl.closest('.w-dropdown');
-        if (dropdown) {
-          const toggle = dropdown.querySelector('.w-dropdown-toggle');
-          if (toggle) {
-            const placeholder = toggle.querySelector('.select-placeholder');
-            
-            if (values.length > 0) {
-              // Show target, hide placeholder
-              targetEl.style.display = 'flex';
-              if (placeholder) {
-                placeholder.style.display = 'none';
-              }
-            } else {
-              // Hide target, show placeholder
-              targetEl.style.display = 'none';
-              if (placeholder) {
-                placeholder.style.display = '';
-                placeholder.style.removeProperty('display');
-              }
+        const toggle = dropdown.querySelector('.w-dropdown-toggle');
+        if (toggle) {
+          const placeholder = toggle.querySelector('.select-placeholder');
+          
+          if (values.length > 0) {
+            // Show target, hide placeholder
+            targetEl.style.display = 'flex';
+            if (placeholder) {
+              placeholder.style.display = 'none';
+            }
+          } else {
+            // Hide target, show placeholder
+            targetEl.style.display = 'none';
+            if (placeholder) {
+              placeholder.style.removeProperty('display');
             }
           }
-          
-          // Show/hide filter-clear elements based on whether filters are selected
-          // Use fs-list-element="clear" with matching fs-list-field
-          const filterClearElements = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${field}"]`);
-          filterClearElements.forEach((el) => {
-            if (values.length > 0) {
-              el.style.display = '';
-            } else {
-              el.style.display = 'none';
-            }
-          });
         }
+        
+        // Show/hide filter-clear elements in this dropdown based on whether filters are selected
+        // Use fs-list-element="clear" with matching fs-list-field
+        const filterClearElements = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${field}"]`);
+        filterClearElements.forEach((el) => {
+          if (values.length > 0) {
+            el.style.display = '';
+          } else {
+            el.style.display = 'none';
+          }
+        });
       });
     };
 
