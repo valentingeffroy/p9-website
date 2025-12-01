@@ -224,6 +224,19 @@ const FilterChips = (() => {
       rafId = requestAnimationFrame(() => {
         const values = readSelectedValues(sourceEl, field);
         renderChips(targetEl, field, values);
+        
+        // Hide/show placeholder based on whether filters are selected
+        const dropdown = sourceEl.closest('.w-dropdown');
+        if (dropdown) {
+          const placeholder = dropdown.querySelector('.select-placeholder');
+          if (placeholder) {
+            if (values.length > 0) {
+              placeholder.style.display = 'none';
+            } else {
+              placeholder.style.display = '';
+            }
+          }
+        }
       });
     };
 
@@ -249,6 +262,57 @@ const FilterChips = (() => {
   }
 
   // ========================================================================
+  // CLOSE DROPDOWN HANDLER
+  // ========================================================================
+
+  /**
+   * Initialize close dropdown button handlers
+   * Closes Webflow dropdown when [close-dropdown] is clicked
+   */
+  function initCloseDropdownHandlers() {
+    console.log('   🔗 Initializing close dropdown handlers...');
+
+    const closeButtons = document.querySelectorAll('[close-dropdown]');
+
+    closeButtons.forEach((closeBtn) => {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Find the closest dropdown parent
+        const dropdown = closeBtn.closest('.w-dropdown');
+        if (!dropdown) {
+          console.warn('   ⚠️  No dropdown found for close button');
+          return;
+        }
+
+        // Find the toggle button
+        const toggle = dropdown.querySelector('.w-dropdown-toggle');
+        
+        // Remove w--open class from dropdown and toggle to close it
+        if (dropdown) {
+          dropdown.classList.remove('w--open');
+        }
+        if (toggle) {
+          toggle.classList.remove('w--open');
+          // Also remove aria-expanded
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        // Also close the dropdown list
+        const dropdownList = dropdown.querySelector('.w-dropdown-list');
+        if (dropdownList) {
+          dropdownList.classList.remove('w--open');
+        }
+
+        console.log('   ✓ Dropdown closed');
+      });
+    });
+
+    console.log(`   ✓ Found ${closeButtons.length} close button(s)`);
+  }
+
+  // ========================================================================
   // PUBLIC API
   // ========================================================================
 
@@ -258,6 +322,7 @@ const FilterChips = (() => {
   function init() {
     console.log('🚀 FilterChips.init() called');
     GROUPS.forEach(wireGroup);
+    initCloseDropdownHandlers();
     console.log('✅ FilterChips initialized');
   }
 
