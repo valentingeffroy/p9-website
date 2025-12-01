@@ -3,31 +3,42 @@
  * Initializes: Tooltips + VimeoLightbox + GlobalSite (navbar menu)
  */
 
-// Load required modules
-//= require utils.js
-//= require tooltips.js
-//= require vimeoLightbox.js
-
 console.log('═════════════════════════════════════════════════════════════');
 console.log('🏠 HOME PAGE SCRIPT LOADING');
 console.log('═════════════════════════════════════════════════════════════');
 
+/**
+ * Wait for a module to be available before initializing
+ */
+function waitForModule(moduleName, callback, maxAttempts = 50, interval = 100) {
+  let attempts = 0;
+  const checkModule = () => {
+    if (typeof window[moduleName] !== 'undefined') {
+      callback();
+    } else {
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(checkModule, interval);
+      } else {
+        console.error(`   ❌ ${moduleName} module not loaded after ${maxAttempts * interval}ms`);
+      }
+    }
+  };
+  checkModule();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   console.log('📍 DOMContentLoaded event fired');
 
-  try {
-    console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
-    if (typeof GlobalSite !== 'undefined') {
+  // Wait for GlobalSite to be loaded
+  waitForModule('GlobalSite', () => {
+    try {
+      console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
       GlobalSite.init();
-    } else {
-      console.error('   ❌ GlobalSite module not loaded!');
-      console.error('   📝 Make sure to load global.js BEFORE homepage.js in your HTML:');
-      console.error('   <script src="https://cdn.jsdelivr.net/gh/USERNAME/REPO@main/src/global.js"></script>');
-      console.error('   <script src="https://cdn.jsdelivr.net/gh/USERNAME/REPO@main/src/homepage.js"></script>');
+    } catch (e) {
+      console.error('   ❌ Error in GlobalSite.init():', e);
     }
-  } catch (e) {
-    console.error('   ❌ Error in GlobalSite.init():', e);
-  }
+  });
 
   try {
     console.log('2️⃣  Initializing Tooltips...');
