@@ -1,6 +1,6 @@
 /**
  * COMPANIES PAGE
- * Initializes: FilterChips, Tooltips, GlobalSite (navbar menu)
+ * Initializes: FilterChips, Tooltips, GlobalSite (navbar menu), GridResize
  */
 
 console.log('═════════════════════════════════════════════════════════════');
@@ -29,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     Tooltips.init();
   } catch (e) {
     console.error('   ❌ Error in Tooltips.init():', e);
+  }
+
+  try {
+    console.log('4️⃣  Initializing Grid Resize...');
+    GridResize.init();
+  } catch (e) {
+    console.error('   ❌ Error in GridResize.init():', e);
   }
 
   console.log('═════════════════════════════════════════════════════════════');
