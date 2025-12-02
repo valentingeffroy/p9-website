@@ -15,7 +15,6 @@ const GridResize = (() => {
     if (grids.length === 0) return;
 
     const columnWidths = [0, 0, 0, 0];
-    const paddingRight = 16;
 
     // Collecter toutes les cellules company_flex-block de tous les grids
     const allCells = [];
@@ -51,7 +50,7 @@ const GridResize = (() => {
         const temp = document.createElement('div');
         const computedStyle = window.getComputedStyle(cell);
         
-        // Copier les styles pertinents pour la largeur
+        // Copier tous les styles pertinents pour la largeur
         temp.style.cssText = `
           position: absolute;
           visibility: hidden;
@@ -62,6 +61,16 @@ const GridResize = (() => {
           font-style: ${computedStyle.fontStyle};
           letter-spacing: ${computedStyle.letterSpacing};
           text-transform: ${computedStyle.textTransform};
+          box-sizing: ${computedStyle.boxSizing};
+          padding-left: ${computedStyle.paddingLeft};
+          padding-right: ${computedStyle.paddingRight};
+          padding-top: ${computedStyle.paddingTop};
+          padding-bottom: ${computedStyle.paddingBottom};
+          margin-left: ${computedStyle.marginLeft};
+          margin-right: ${computedStyle.marginRight};
+          border-left-width: ${computedStyle.borderLeftWidth};
+          border-right-width: ${computedStyle.borderRightWidth};
+          display: ${computedStyle.display};
         `;
         
         temp.innerHTML = cell.innerHTML;
@@ -69,8 +78,7 @@ const GridResize = (() => {
         let width = temp.offsetWidth;
         document.body.removeChild(temp);
         
-        // Ajouter le padding-right de 16px
-        width += paddingRight;
+        // Le padding est maintenant inclus dans la mesure via les styles CSS copiés
         
         if (width > columnWidths[columnIndex]) {
           columnWidths[columnIndex] = width;
