@@ -47,9 +47,9 @@ const GridResize = (() => {
         document.head.appendChild(styleElement);
       }
       
-      // Min = largeur actuelle calculée, Max = peut grandir si besoin
+      // Min = largeur actuelle calculée, Max = peut grandir pour remplir 100% de la largeur
       const template = currentMaxWidths.map(w => 
-        `minmax(${w}px, max-content)`
+        `minmax(${w}px, 1fr)`
       ).join(' ');
       
       styleElement.textContent = `.company_grid { grid-template-columns: ${template} !important; }`;
