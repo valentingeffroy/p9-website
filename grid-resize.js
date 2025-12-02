@@ -30,6 +30,16 @@ const GridResize = (() => {
     const cellsToMeasure = allCells.length > 0 ? allCells : 
       Array.from(grids).flatMap(grid => Array.from(grid.children));
 
+    console.log('📊 Nombre de grids:', grids.length);
+    console.log('📊 Nombre de cellules à mesurer:', cellsToMeasure.length);
+    console.log('📊 Premières cellules:', cellsToMeasure.slice(0, 12).map((c, i) => ({
+      index: i,
+      column: i % 4,
+      content: c.textContent.substring(0, 40).trim(),
+      hasClass: c.classList.contains('company_flex-block'),
+      html: c.innerHTML.substring(0, 50)
+    })));
+
     // Mesurer toutes les cellules et déterminer la colonne globalement
     cellsToMeasure.forEach((cell, index) => {
       // Déterminer la colonne : dans une grid à 4 colonnes, index % 4 donne la colonne
@@ -64,9 +74,13 @@ const GridResize = (() => {
         
         if (width > columnWidths[columnIndex]) {
           columnWidths[columnIndex] = width;
+          console.log(`📏 Colonne ${columnIndex} mise à jour: ${width}px (contenu: ${cell.textContent.substring(0, 30)})`);
         }
       }
     });
+
+    console.log('📊 Largeurs calculées (columnWidths):', columnWidths);
+    console.log('📊 Largeurs actuelles (currentMaxWidths):', currentMaxWidths);
 
     // Ne grandir que si nécessaire (jamais rétrécir)
     let hasChanged = false;
@@ -90,6 +104,8 @@ const GridResize = (() => {
       ).join(' ');
       
       styleElement.textContent = `.company_grid { grid-template-columns: ${template} !important; }`;
+      console.log('📊 CSS appliqué:', styleElement.textContent);
+      console.log('📊 Largeurs finales (currentMaxWidths):', currentMaxWidths);
     }
   }
 
