@@ -126,47 +126,22 @@ const GridResize = (() => {
     const scrollContainer = document.querySelector('.filter_block.is-data');
     const fade = document.querySelector('.companies_fade-mobile');
     
-    console.log('🔍 handleFadeMobile appelé');
-    console.log('   scrollContainer trouvé:', !!scrollContainer);
-    console.log('   fade trouvé:', !!fade);
-    
-    if (!scrollContainer) {
-      console.warn('   ⚠️  scrollContainer (.filter_block.is-data) non trouvé');
-      return;
-    }
-    
-    if (!fade) {
-      console.warn('   ⚠️  fade (.companies_fade-mobile) non trouvé');
-      return;
-    }
+    if (!scrollContainer || !fade) return;
     
     // Vérifier s'il y a overflow horizontal
-    const scrollWidth = scrollContainer.scrollWidth;
-    const clientWidth = scrollContainer.clientWidth;
-    const hasOverflow = scrollWidth > clientWidth;
-    
-    console.log('   scrollWidth:', scrollWidth);
-    console.log('   clientWidth:', clientWidth);
-    console.log('   hasOverflow:', hasOverflow);
+    const hasOverflow = scrollContainer.scrollWidth > scrollContainer.clientWidth;
     
     if (!hasOverflow) {
-      console.log('   ➡️  Pas d\'overflow, fade caché');
       fade.style.display = 'none';
       return;
     }
     
     // Vérifier si on est tout à droite (avec une petite tolérance)
-    const scrollLeft = scrollContainer.scrollLeft;
-    const isAtRight = scrollLeft + clientWidth >= scrollWidth - 1;
-    
-    console.log('   scrollLeft:', scrollLeft);
-    console.log('   isAtRight:', isAtRight);
+    const isAtRight = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 1;
     
     if (isAtRight) {
-      console.log('   ➡️  Tout à droite, fade caché');
       fade.style.display = 'none';
     } else {
-      console.log('   ➡️  Pas tout à droite, fade affiché');
       fade.style.display = 'block';
     }
   }
