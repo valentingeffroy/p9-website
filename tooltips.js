@@ -119,6 +119,12 @@ const Tooltips = (() => {
   function init() {
     // console.log('🚀 Tooltips.init() called');
 
+    // Désactiver les tooltips sur mobile/tablette
+    if (!isDesktop()) {
+      // console.log('   ⚠️  Tooltips désactivés sur mobile/tablette');
+      return;
+    }
+
     // Find single global tooltip target
     const tooltip = document.querySelector('[tooltip="target"]');
 
