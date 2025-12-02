@@ -119,12 +119,6 @@ const Tooltips = (() => {
   function init() {
     // console.log('🚀 Tooltips.init() called');
 
-    // Only initialize on desktop devices
-    if (!isDesktop()) {
-      // console.log('   ⚠️  Tooltips disabled: not a desktop device');
-      return;
-    }
-
     // Find single global tooltip target
     const tooltip = document.querySelector('[tooltip="target"]');
 
