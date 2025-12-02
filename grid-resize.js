@@ -15,6 +15,7 @@ const GridResize = (() => {
     if (grids.length === 0) return;
 
     const columnWidths = [0, 0, 0, 0];
+    const paddingRight = 16;
 
     // Collecter toutes les cellules company_flex-block de tous les grids
     const allCells = [];
@@ -78,7 +79,8 @@ const GridResize = (() => {
         let width = temp.offsetWidth;
         document.body.removeChild(temp);
         
-        // Le padding est maintenant inclus dans la mesure via les styles CSS copiés
+        // Ajouter le padding-right de 16px pour l'espacement entre colonnes
+        width += paddingRight;
         
         if (width > columnWidths[columnIndex]) {
           columnWidths[columnIndex] = width;
