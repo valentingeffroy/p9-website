@@ -24,9 +24,17 @@ const GridResize = (() => {
           temp.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;';
           temp.innerHTML = cell.innerHTML;
           document.body.appendChild(temp);
-          const width = temp.offsetWidth + padding;
+          const contentWidth = temp.offsetWidth;
+          const width = contentWidth + padding;
           document.body.removeChild(temp);
-          if (width > columnWidths[index]) columnWidths[index] = width;
+          
+          if (width > columnWidths[index]) {
+            const columnNames = ['COMPANY', 'P9 INVESTMENT', 'LOCATION', 'STATUS'];
+            console.log(`📏 Colonne ${index} (${columnNames[index]}): ${width}px (contenu: ${contentWidth}px + padding: ${padding}px)`);
+            console.log(`   Contenu HTML:`, cell.innerHTML.substring(0, 100) + (cell.innerHTML.length > 100 ? '...' : ''));
+            console.log(`   Cellule:`, cell);
+            columnWidths[index] = width;
+          }
         }
       });
     });
