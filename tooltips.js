@@ -19,6 +19,21 @@ const Tooltips = (() => {
   // ========================================================================
 
   /**
+   * Check if device is desktop (not mobile/tablet)
+   * Returns true only for desktop devices with mouse pointer
+   */
+  function isDesktop() {
+    // Check for fine pointer (mouse) support
+    const hasFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    
+    // Check screen width (desktop typically >= 1024px)
+    const isWideScreen = window.innerWidth >= 1024;
+    
+    // Desktop: must have fine pointer (mouse) and wide screen
+    return hasFinePointer && isWideScreen;
+  }
+
+  /**
    * Reset translate/transform when tooltip is hidden
    */
   function resetIfHidden(tt, supportsTranslateProp) {
@@ -103,6 +118,12 @@ const Tooltips = (() => {
    */
   function init() {
     // console.log('🚀 Tooltips.init() called');
+
+    // Only initialize on desktop devices
+    if (!isDesktop()) {
+      // console.log('   ⚠️  Tooltips disabled: not a desktop device');
+      return;
+    }
 
     // Find single global tooltip target
     const tooltip = document.querySelector('[tooltip="target"]');
