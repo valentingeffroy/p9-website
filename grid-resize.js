@@ -18,8 +18,19 @@ const GridResize = (() => {
     const paddingRight = 16;
 
     grids.forEach(grid => {
-      Array.from(grid.children).forEach((cell, index) => {
-        if (index < 4) {
+      // Sélectionner toutes les cellules avec la classe company_flex-block
+      const cells = Array.from(grid.children).filter(cell => 
+        cell.classList.contains('company_flex-block')
+      );
+      
+      // Si pas de cellules company_flex-block, utiliser tous les enfants
+      const cellsToMeasure = cells.length > 0 ? cells : Array.from(grid.children);
+      
+      cellsToMeasure.forEach((cell, index) => {
+        // Déterminer la colonne : dans une grid à 4 colonnes, index % 4 donne la colonne
+        const columnIndex = index % 4;
+        
+        if (columnIndex < 4) {
           // Créer un élément temporaire avec les styles CSS de la cellule originale
           // (scrollWidth inclut les contraintes CSS comme min-width, donc on évite de l'utiliser)
           const temp = document.createElement('div');
@@ -46,8 +57,8 @@ const GridResize = (() => {
           // Ajouter le padding-right de 16px
           width += paddingRight;
           
-          if (width > columnWidths[index]) {
-            columnWidths[index] = width;
+          if (width > columnWidths[columnIndex]) {
+            columnWidths[columnIndex] = width;
           }
         }
       });
