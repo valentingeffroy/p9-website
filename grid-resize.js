@@ -117,6 +117,33 @@ const GridResize = (() => {
       console.log('📊 CSS appliqué:', styleElement.textContent);
       console.log('📊 Largeurs finales (currentMaxWidths):', currentMaxWidths);
     }
+    
+    // Recalculer le fade mobile après ajustement des grids
+    handleFadeMobile();
+  }
+
+  function handleFadeMobile() {
+    const scrollContainer = document.querySelector('.filter_block.is-filter');
+    const fade = document.querySelector('.companies_fade-mobile');
+    
+    if (!scrollContainer || !fade) return;
+    
+    // Vérifier s'il y a overflow horizontal
+    const hasOverflow = scrollContainer.scrollWidth > scrollContainer.clientWidth;
+    
+    if (!hasOverflow) {
+      fade.style.display = 'none';
+      return;
+    }
+    
+    // Vérifier si on est tout à droite (avec une petite tolérance)
+    const isAtRight = scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 1;
+    
+    if (isAtRight) {
+      fade.style.display = 'none';
+    } else {
+      fade.style.display = 'block';
+    }
   }
 
   function init() {
@@ -136,6 +163,19 @@ const GridResize = (() => {
     if (list) {
       observer = new MutationObserver(() => setTimeout(adjustGrids, 100));
       observer.observe(list, {childList: true});
+    }
+
+    // Gérer le fade mobile
+    const scrollContainer = document.querySelector('.filter_block.is-filter');
+    if (scrollContainer) {
+      // Vérification initiale
+      handleFadeMobile();
+      
+      // Écouter le scroll
+      scrollContainer.addEventListener('scroll', handleFadeMobile, { passive: true });
+      
+      // Écouter le resize pour recalculer
+      window.addEventListener('resize', handleFadeMobile, { passive: true });
     }
   }
 
