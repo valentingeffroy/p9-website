@@ -20,35 +20,28 @@ const GridResize = (() => {
     grids.forEach(grid => {
       Array.from(grid.children).forEach((cell, index) => {
         if (index < 4) {
-          // Mesurer directement la cellule réelle si possible, sinon créer un clone avec les styles
-          let width = 0;
+          // Créer un élément temporaire avec les styles CSS de la cellule originale
+          // (scrollWidth inclut les contraintes CSS comme min-width, donc on évite de l'utiliser)
+          const temp = document.createElement('div');
+          const computedStyle = window.getComputedStyle(cell);
           
-          // Essayer de mesurer la cellule réelle avec scrollWidth (largeur du contenu)
-          if (cell.scrollWidth > 0) {
-            width = cell.scrollWidth;
-          } else {
-            // Sinon, créer un élément temporaire avec les styles CSS de la cellule originale
-            const temp = document.createElement('div');
-            const computedStyle = window.getComputedStyle(cell);
-            
-            // Copier les styles pertinents pour la largeur
-            temp.style.cssText = `
-              position: absolute;
-              visibility: hidden;
-              white-space: nowrap;
-              font-family: ${computedStyle.fontFamily};
-              font-size: ${computedStyle.fontSize};
-              font-weight: ${computedStyle.fontWeight};
-              font-style: ${computedStyle.fontStyle};
-              letter-spacing: ${computedStyle.letterSpacing};
-              text-transform: ${computedStyle.textTransform};
-            `;
-            
-            temp.innerHTML = cell.innerHTML;
-            document.body.appendChild(temp);
-            width = temp.offsetWidth;
-            document.body.removeChild(temp);
-          }
+          // Copier les styles pertinents pour la largeur
+          temp.style.cssText = `
+            position: absolute;
+            visibility: hidden;
+            white-space: nowrap;
+            font-family: ${computedStyle.fontFamily};
+            font-size: ${computedStyle.fontSize};
+            font-weight: ${computedStyle.fontWeight};
+            font-style: ${computedStyle.fontStyle};
+            letter-spacing: ${computedStyle.letterSpacing};
+            text-transform: ${computedStyle.textTransform};
+          `;
+          
+          temp.innerHTML = cell.innerHTML;
+          document.body.appendChild(temp);
+          let width = temp.offsetWidth;
+          document.body.removeChild(temp);
           
           // Ajouter le padding-right de 16px
           width += paddingRight;
