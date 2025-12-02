@@ -19,17 +19,39 @@ const GridResize = (() => {
     grids.forEach(grid => {
       Array.from(grid.children).forEach((cell, index) => {
         if (index < 4) {
-          const temp = document.createElement('div');
-          temp.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;';
-          temp.innerHTML = cell.innerHTML;
-          document.body.appendChild(temp);
-          const contentWidth = temp.offsetWidth;
-          const width = contentWidth;
-          document.body.removeChild(temp);
+          // Mesurer directement la cellule réelle si possible, sinon créer un clone avec les styles
+          let width = 0;
+          
+          // Essayer de mesurer la cellule réelle avec scrollWidth (largeur du contenu)
+          if (cell.scrollWidth > 0) {
+            width = cell.scrollWidth;
+          } else {
+            // Sinon, créer un élément temporaire avec les styles CSS de la cellule originale
+            const temp = document.createElement('div');
+            const computedStyle = window.getComputedStyle(cell);
+            
+            // Copier les styles pertinents pour la largeur
+            temp.style.cssText = `
+              position: absolute;
+              visibility: hidden;
+              white-space: nowrap;
+              font-family: ${computedStyle.fontFamily};
+              font-size: ${computedStyle.fontSize};
+              font-weight: ${computedStyle.fontWeight};
+              font-style: ${computedStyle.fontStyle};
+              letter-spacing: ${computedStyle.letterSpacing};
+              text-transform: ${computedStyle.textTransform};
+            `;
+            
+            temp.innerHTML = cell.innerHTML;
+            document.body.appendChild(temp);
+            width = temp.offsetWidth;
+            document.body.removeChild(temp);
+          }
           
           if (width > columnWidths[index]) {
             const columnNames = ['COMPANY', 'P9 INVESTMENT', 'LOCATION', 'STATUS'];
-            console.log(`📏 Colonne ${index} (${columnNames[index]}): ${width}px (contenu: ${contentWidth}px)`);
+            console.log(`📏 Colonne ${index} (${columnNames[index]}): ${width}px`);
             console.log(`   Contenu HTML:`, cell.innerHTML.substring(0, 100) + (cell.innerHTML.length > 100 ? '...' : ''));
             console.log(`   Cellule:`, cell);
             columnWidths[index] = width;
