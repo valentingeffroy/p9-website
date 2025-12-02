@@ -17,51 +17,55 @@ const GridResize = (() => {
     const columnWidths = [0, 0, 0, 0];
     const paddingRight = 16;
 
+    // Collecter toutes les cellules company_flex-block de tous les grids
+    const allCells = [];
     grids.forEach(grid => {
-      // Sélectionner toutes les cellules avec la classe company_flex-block
       const cells = Array.from(grid.children).filter(cell => 
         cell.classList.contains('company_flex-block')
       );
+      allCells.push(...cells);
+    });
+
+    // Si pas de cellules company_flex-block, utiliser tous les enfants de tous les grids
+    const cellsToMeasure = allCells.length > 0 ? allCells : 
+      Array.from(grids).flatMap(grid => Array.from(grid.children));
+
+    // Mesurer toutes les cellules et déterminer la colonne globalement
+    cellsToMeasure.forEach((cell, index) => {
+      // Déterminer la colonne : dans une grid à 4 colonnes, index % 4 donne la colonne
+      const columnIndex = index % 4;
       
-      // Si pas de cellules company_flex-block, utiliser tous les enfants
-      const cellsToMeasure = cells.length > 0 ? cells : Array.from(grid.children);
-      
-      cellsToMeasure.forEach((cell, index) => {
-        // Déterminer la colonne : dans une grid à 4 colonnes, index % 4 donne la colonne
-        const columnIndex = index % 4;
+      if (columnIndex < 4) {
+        // Créer un élément temporaire avec les styles CSS de la cellule originale
+        // (scrollWidth inclut les contraintes CSS comme min-width, donc on évite de l'utiliser)
+        const temp = document.createElement('div');
+        const computedStyle = window.getComputedStyle(cell);
         
-        if (columnIndex < 4) {
-          // Créer un élément temporaire avec les styles CSS de la cellule originale
-          // (scrollWidth inclut les contraintes CSS comme min-width, donc on évite de l'utiliser)
-          const temp = document.createElement('div');
-          const computedStyle = window.getComputedStyle(cell);
-          
-          // Copier les styles pertinents pour la largeur
-          temp.style.cssText = `
-            position: absolute;
-            visibility: hidden;
-            white-space: nowrap;
-            font-family: ${computedStyle.fontFamily};
-            font-size: ${computedStyle.fontSize};
-            font-weight: ${computedStyle.fontWeight};
-            font-style: ${computedStyle.fontStyle};
-            letter-spacing: ${computedStyle.letterSpacing};
-            text-transform: ${computedStyle.textTransform};
-          `;
-          
-          temp.innerHTML = cell.innerHTML;
-          document.body.appendChild(temp);
-          let width = temp.offsetWidth;
-          document.body.removeChild(temp);
-          
-          // Ajouter le padding-right de 16px
-          width += paddingRight;
-          
-          if (width > columnWidths[columnIndex]) {
-            columnWidths[columnIndex] = width;
-          }
+        // Copier les styles pertinents pour la largeur
+        temp.style.cssText = `
+          position: absolute;
+          visibility: hidden;
+          white-space: nowrap;
+          font-family: ${computedStyle.fontFamily};
+          font-size: ${computedStyle.fontSize};
+          font-weight: ${computedStyle.fontWeight};
+          font-style: ${computedStyle.fontStyle};
+          letter-spacing: ${computedStyle.letterSpacing};
+          text-transform: ${computedStyle.textTransform};
+        `;
+        
+        temp.innerHTML = cell.innerHTML;
+        document.body.appendChild(temp);
+        let width = temp.offsetWidth;
+        document.body.removeChild(temp);
+        
+        // Ajouter le padding-right de 16px
+        width += paddingRight;
+        
+        if (width > columnWidths[columnIndex]) {
+          columnWidths[columnIndex] = width;
         }
-      });
+      }
     });
 
     // Ne grandir que si nécessaire (jamais rétrécir)
