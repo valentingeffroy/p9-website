@@ -15,7 +15,6 @@ const GridResize = (() => {
     if (grids.length === 0) return;
 
     const columnWidths = [0, 0, 0, 0];
-    const padding = 32;
 
     grids.forEach(grid => {
       Array.from(grid.children).forEach((cell, index) => {
@@ -25,12 +24,12 @@ const GridResize = (() => {
           temp.innerHTML = cell.innerHTML;
           document.body.appendChild(temp);
           const contentWidth = temp.offsetWidth;
-          const width = contentWidth + padding;
+          const width = contentWidth;
           document.body.removeChild(temp);
           
           if (width > columnWidths[index]) {
             const columnNames = ['COMPANY', 'P9 INVESTMENT', 'LOCATION', 'STATUS'];
-            console.log(`📏 Colonne ${index} (${columnNames[index]}): ${width}px (contenu: ${contentWidth}px + padding: ${padding}px)`);
+            console.log(`📏 Colonne ${index} (${columnNames[index]}): ${width}px (contenu: ${contentWidth}px)`);
             console.log(`   Contenu HTML:`, cell.innerHTML.substring(0, 100) + (cell.innerHTML.length > 100 ? '...' : ''));
             console.log(`   Cellule:`, cell);
             columnWidths[index] = width;
