@@ -50,10 +50,6 @@ const GridResize = (() => {
           }
           
           if (width > columnWidths[index]) {
-            const columnNames = ['COMPANY', 'P9 INVESTMENT', 'LOCATION', 'STATUS'];
-            console.log(`📏 Colonne ${index} (${columnNames[index]}): ${width}px`);
-            console.log(`   Contenu HTML:`, cell.innerHTML.substring(0, 100) + (cell.innerHTML.length > 100 ? '...' : ''));
-            console.log(`   Cellule:`, cell);
             columnWidths[index] = width;
           }
         }
@@ -82,7 +78,6 @@ const GridResize = (() => {
       ).join(' ');
       
       styleElement.textContent = `.company_grid { grid-template-columns: ${template} !important; }`;
-      console.log('📊 Largeurs:', currentMaxWidths);
     }
   }
 
@@ -93,7 +88,6 @@ const GridResize = (() => {
     // Handle "Load More" button clicks
     clickHandler = (e) => {
       if (e.target.closest('.w-pagination-next')) {
-        console.log('🔄 Load More');
         setTimeout(adjustGrids, 400);
       }
     };
@@ -105,8 +99,6 @@ const GridResize = (() => {
       observer = new MutationObserver(() => setTimeout(adjustGrids, 100));
       observer.observe(list, {childList: true});
     }
-
-    console.log('✅ GridResize initialized');
   }
 
   return { init };
