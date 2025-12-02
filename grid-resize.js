@@ -15,6 +15,8 @@ const GridResize = (() => {
     if (grids.length === 0) return;
 
     const columnWidths = [0, 0, 0, 0];
+    // Convertir 1rem en pixels
+    const paddingRight = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 
     grids.forEach(grid => {
       Array.from(grid.children).forEach((cell, index) => {
@@ -48,6 +50,9 @@ const GridResize = (() => {
             width = temp.offsetWidth;
             document.body.removeChild(temp);
           }
+          
+          // Ajouter le padding-right de 1rem
+          width += paddingRight;
           
           if (width > columnWidths[index]) {
             columnWidths[index] = width;
