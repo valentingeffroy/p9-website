@@ -343,46 +343,15 @@ const FilterChips = (() => {
   // ========================================================================
   // CLEAR FILTERS HANDLER
   // ========================================================================
-
-  /**
-   * Initialize clear filter button handlers
-   * Clears all selected filters for a specific field when [fs-list-element="clear"] is clicked
-   */
-  function initClearFilterHandlers() {
-    // Use event delegation to handle dynamically added elements
-    document.addEventListener('click', (e) => {
-      const clearBtn = e.target.closest('[fs-list-element="clear"]');
-      if (!clearBtn) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Trouver le dropdown parent
-      const dropdown = clearBtn.closest('.w-dropdown');
-      if (!dropdown) return;
-
-      // Trouver le tag-container dans ce dropdown
-      const sourceEl = dropdown.querySelector('[tag-container]');
-      if (!sourceEl) return;
-
-      // Utiliser getActualField pour obtenir le fs-list-field réel
-      const firstInput = sourceEl.querySelector('input[type="checkbox"], input[type="radio"]');
-      if (!firstInput) return;
-      
-      const actualField = getActualField(sourceEl, '');
-
-      // Find all checked inputs for this field and uncheck them
-      const checkedInputs = sourceEl.querySelectorAll(
-        `input[fs-list-field="${actualField}"][type="checkbox"]:checked, input[fs-list-field="${actualField}"][type="radio"]:checked`
-      );
-
-      checkedInputs.forEach((input) => {
-        if (input.checked || input.getAttribute('aria-checked') === 'true') {
-          Utils.clickInputOrLabel(input);
-        }
-      });
-    });
-  }
+  // NOTE: Finsweet Attributes gère automatiquement les boutons clear
+  // avec fs-list-element="clear". On ne gère que l'affichage/masquage
+  // des boutons clear dans wireSingleDropdown().
+  // 
+  // Pour que Finsweet gère correctement les clears, assurez-vous que :
+  // - Les boutons clear ont fs-list-element="clear"
+  // - Si clear d'un champ spécifique : ajoutez fs-list-field="IDENTIFIER"
+  //   (le même que les inputs dans le conteneur)
+  // - Si clear de tous les champs : pas de fs-list-field sur le bouton
 
   // ========================================================================
   // CLOSE DROPDOWN HANDLER
@@ -465,7 +434,7 @@ const FilterChips = (() => {
   function init() {
     console.log('🚀 FilterChips.init() called');
     GROUPS.forEach(wireGroup);
-    initClearFilterHandlers();
+    // initClearFilterHandlers() supprimé - Finsweet gère les clears automatiquement
     initCloseDropdownHandlers();
     console.log('✅ FilterChips initialized');
   }
