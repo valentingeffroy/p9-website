@@ -341,18 +341,26 @@ const FilterChips = (() => {
       const clearBtn = e.target.closest('[fs-list-element="clear"]');
       if (!clearBtn) return;
 
-      const field = clearBtn.getAttribute('fs-list-field');
-      if (!field) return;
-
       e.preventDefault();
       e.stopPropagation();
 
-      // Find all checked inputs for this field and uncheck them
-      const sourceEl = document.querySelector(`[tag-container="${field}"]`);
+      // Trouver le dropdown parent
+      const dropdown = clearBtn.closest('.w-dropdown');
+      if (!dropdown) return;
+
+      // Trouver le tag-container dans ce dropdown
+      const sourceEl = dropdown.querySelector('[tag-container]');
       if (!sourceEl) return;
 
+      // Lire le fs-list-field réel du premier input dans le conteneur
+      const firstInput = sourceEl.querySelector('input[type="checkbox"], input[type="radio"]');
+      if (!firstInput) return;
+      
+      const actualField = firstInput.getAttribute('fs-list-field');
+
+      // Find all checked inputs for this field and uncheck them
       const checkedInputs = sourceEl.querySelectorAll(
-        `input[fs-list-field="${field}"][type="checkbox"]:checked, input[fs-list-field="${field}"][type="radio"]:checked`
+        `input[fs-list-field="${actualField}"][type="checkbox"]:checked, input[fs-list-field="${actualField}"][type="radio"]:checked`
       );
 
       checkedInputs.forEach((input) => {
