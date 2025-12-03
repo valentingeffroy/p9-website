@@ -1,6 +1,6 @@
 /**
  * HOME PAGE
- * Initializes: Tooltips + VimeoLightbox + GlobalSite (navbar menu)
+ * Initializes: Tooltips + VimeoLightbox + GlobalSite (navbar menu) + Tabs
  */
 
 console.log('═════════════════════════════════════════════════════════════');
@@ -29,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     VimeoLightbox.init();
   } catch (e) {
     console.error('   ❌ Error in VimeoLightbox.init():', e);
+  }
+
+  try {
+    console.log('4️⃣  Initializing Tabs...');
+    Tabs.init();
+  } catch (e) {
+    console.error('   ❌ Error in Tabs.init():', e);
   }
 
   console.log('═════════════════════════════════════════════════════════════');

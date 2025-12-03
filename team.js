@@ -1,6 +1,6 @@
 /**
  * TEAM PAGE
- * Initializes: GlobalSite (navbar menu) + Utils
+ * Initializes: GlobalSite (navbar menu) + Tabs
  */
 
 console.log('═════════════════════════════════════════════════════════════');
@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
     GlobalSite.init();
   } catch (e) {
     console.error('   ❌ Error in GlobalSite.init():', e);
+  }
+
+  try {
+    console.log('2️⃣  Initializing Tabs...');
+    Tabs.init();
+  } catch (e) {
+    console.error('   ❌ Error in Tabs.init():', e);
   }
 
   // Utils est un module partagé, pas besoin d'initialisation
