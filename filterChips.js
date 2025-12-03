@@ -48,11 +48,17 @@ const FilterChips = (() => {
 
   /**
    * Read all currently selected filter values
+   * Automatically detects the actual fs-list-field from inputs in the container
    */
   function readSelectedValues(sourceEl, field) {
+    // Lire le fs-list-field réel du premier input dans le conteneur
+    // au lieu d'utiliser le field de la configuration
+    const firstInput = sourceEl.querySelector('input[type="checkbox"], input[type="radio"]');
+    const actualField = firstInput ? firstInput.getAttribute('fs-list-field') : field;
+    
     const selector = [
-      `input[fs-list-field="${field}"][type="checkbox"]:checked`,
-      `input[fs-list-field="${field}"][type="radio"]:checked`,
+      `input[fs-list-field="${actualField}"][type="checkbox"]:checked`,
+      `input[fs-list-field="${actualField}"][type="radio"]:checked`,
     ].join(',');
 
     const vals = new Set();
