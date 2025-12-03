@@ -47,14 +47,20 @@ const FilterChips = (() => {
   // ========================================================================
 
   /**
+   * Get the actual fs-list-field from inputs in a container
+   * Falls back to the provided field if no inputs found
+   */
+  function getActualField(sourceEl, fallbackField) {
+    const firstInput = sourceEl.querySelector('input[type="checkbox"], input[type="radio"]');
+    return firstInput ? (firstInput.getAttribute('fs-list-field') || fallbackField) : fallbackField;
+  }
+
+  /**
    * Read all currently selected filter values
    * Automatically detects the actual fs-list-field from inputs in the container
    */
   function readSelectedValues(sourceEl, field) {
-    // Lire le fs-list-field réel du premier input dans le conteneur
-    // au lieu d'utiliser le field de la configuration
-    const firstInput = sourceEl.querySelector('input[type="checkbox"], input[type="radio"]');
-    const actualField = firstInput ? firstInput.getAttribute('fs-list-field') : field;
+    const actualField = getActualField(sourceEl, field);
     
     const selector = [
       `input[fs-list-field="${actualField}"][type="checkbox"]:checked`,
@@ -72,16 +78,20 @@ const FilterChips = (() => {
 
   /**
    * Toggle a filter value on/off
+   * Uses actualField if sourceEl is provided, otherwise uses field
    */
-  function toggleValue(field, value) {
-    Utils.queryInputsByFieldAndValue(field, value).forEach(Utils.clickInputOrLabel);
+  function toggleValue(field, value, sourceEl = null) {
+    const actualField = sourceEl ? getActualField(sourceEl, field) : field;
+    Utils.queryInputsByFieldAndValue(actualField, value).forEach(Utils.clickInputOrLabel);
   }
 
   /**
    * Uncheck a filter value if it's currently selected
+   * Uses actualField if sourceEl is provided, otherwise uses field
    */
-  function uncheckValueIfChecked(field, value) {
-    Utils.queryInputsByFieldAndValue(field, value).forEach((inp) => {
+  function uncheckValueIfChecked(field, value, sourceEl = null) {
+    const actualField = sourceEl ? getActualField(sourceEl, field) : field;
+    Utils.queryInputsByFieldAndValue(actualField, value).forEach((inp) => {
       const aria = inp.getAttribute('aria-checked');
       const isOn = inp.checked || aria === 'true';
       if (isOn) Utils.clickInputOrLabel(inp);
@@ -144,7 +154,7 @@ const FilterChips = (() => {
    * Render filter chips to target container
    * Handles "+N more" aggregation when multiple filters selected
    */
-  function renderChips(targetEl, field, values) {
+  function renderChips(targetEl, actualField, values, sourceEl) {
     targetEl.innerHTML = '';
 
     // No filters: remove accessibility attributes
@@ -160,8 +170,8 @@ const FilterChips = (() => {
 
     // First chip (always shown)
     const firstVal = values[0];
-    const firstChip = makeChip(firstVal, field);
-    onPointerActivate(firstChip, () => toggleValue(field, firstVal));
+    const firstChip = makeChip(firstVal, actualField);
+    onPointerActivate(firstChip, () => toggleValue(actualField, firstVal, sourceEl));
     targetEl.appendChild(firstChip);
 
     // Aggregate chip for remaining values
@@ -169,14 +179,14 @@ const FilterChips = (() => {
       const extraCount = values.length - 1;
       const extraVals = values.slice(1);
 
-      const aggChip = makeChip(`+${extraCount} more`, field);
+      const aggChip = makeChip(`+${extraCount} more`, actualField);
       aggChip.classList.add('is-aggregate');
       aggChip.title = extraVals.join(', ');
 
       const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
 
       const handler = () => {
-        extraVals.forEach((v) => uncheckValueIfChecked(field, v));
+        extraVals.forEach((v) => uncheckValueIfChecked(actualField, v, sourceEl));
       };
 
       if (removeEl) {
@@ -263,6 +273,9 @@ const FilterChips = (() => {
   function wireSingleDropdown({ field, sourceEl, targetEl, dropdown }) {
     relocateTargetOutsideToggle(targetEl);
 
+    // Détecter le fs-list-field réel une fois au début
+    const actualField = getActualField(sourceEl, field);
+
     // Schedule rendering with requestAnimationFrame
     let rafId = null;
     const schedule = () => {
@@ -270,7 +283,7 @@ const FilterChips = (() => {
       rafId = requestAnimationFrame(() => {
         // Read values only from this specific source element
         const values = readSelectedValues(sourceEl, field);
-        renderChips(targetEl, field, values);
+        renderChips(targetEl, actualField, values, sourceEl);
         
         // Show/hide placeholder and target based on whether filters are selected
         const toggle = dropdown.querySelector('.w-dropdown-toggle');
@@ -306,10 +319,10 @@ const FilterChips = (() => {
       });
     };
 
-    // Listen for input change events
+    // Listen for input change events - utiliser actualField
     sourceEl.addEventListener('change', (e) => {
       const t = e.target;
-      if (t?.matches(`input[fs-list-field="${field}"]`)) {
+      if (t?.matches(`input[fs-list-field="${actualField}"]`)) {
         schedule();
       }
     });
@@ -352,11 +365,11 @@ const FilterChips = (() => {
       const sourceEl = dropdown.querySelector('[tag-container]');
       if (!sourceEl) return;
 
-      // Lire le fs-list-field réel du premier input dans le conteneur
+      // Utiliser getActualField pour obtenir le fs-list-field réel
       const firstInput = sourceEl.querySelector('input[type="checkbox"], input[type="radio"]');
       if (!firstInput) return;
       
-      const actualField = firstInput.getAttribute('fs-list-field');
+      const actualField = getActualField(sourceEl, '');
 
       // Find all checked inputs for this field and uncheck them
       const checkedInputs = sourceEl.querySelectorAll(
