@@ -1,6 +1,6 @@
 /**
  * LIBRARY PAGE
- * Initializes: FilterChips + Tooltips + GlobalSite (navbar menu)
+ * Initializes: FilterChips + GlobalSite (navbar menu)
  */
 
 console.log('═════════════════════════════════════════════════════════════');
@@ -22,13 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     FilterChips.init();
   } catch (e) {
     console.error('   ❌ Error in FilterChips.init():', e);
-  }
-
-  try {
-    console.log('3️⃣  Initializing Tooltips...');
-    Tooltips.init();
-  } catch (e) {
-    console.error('   ❌ Error in Tooltips.init():', e);
   }
 
   console.log('═════════════════════════════════════════════════════════════');
