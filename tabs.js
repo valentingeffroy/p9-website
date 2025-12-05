@@ -29,4 +29,3 @@ const Tabs = (() => {
 
   return { init };
 })();
-
