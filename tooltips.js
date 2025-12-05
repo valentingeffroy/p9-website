@@ -67,6 +67,10 @@ const Tooltips = (() => {
     // Find source elements directly in [tooltip="source"]
     const sourceImage = source.querySelector('[tooltip="image"]');
     const sourceParagraph = source.querySelector('[tooltip="paragraph"]');
+    const sourceColor = source.querySelector('[tooltip="color"]');
+    const sourceImgInvest = source.querySelector('[tooltip="img-invest"]');
+    const sourceStep = source.querySelector('[tooltip="step"]');
+    const sourceDate = source.querySelector('[tooltip="date"]');
     
     // console.log('   sourceImage:', sourceImage);
     // console.log('   sourceParagraph:', sourceParagraph);
@@ -74,6 +78,10 @@ const Tooltips = (() => {
     // Find target elements in tooltip
     const targetImage = tooltip.querySelector('[tooltip="image"]');
     const targetParagraph = tooltip.querySelector('[tooltip="paragraph"]');
+    const targetColor = tooltip.querySelector('[tooltip="color"]');
+    const targetImgInvest = tooltip.querySelector('[tooltip="img-invest"]');
+    const targetStep = tooltip.querySelector('[tooltip="step"]');
+    const targetDate = tooltip.querySelector('[tooltip="date"]');
     
     // console.log('   targetImage:', targetImage);
     // console.log('   targetParagraph:', targetParagraph);
@@ -110,6 +118,50 @@ const Tooltips = (() => {
       // console.log('   ✅ Paragraph copied');
     } else {
       // console.warn('   ⚠️  Missing sourceParagraph or targetParagraph', { sourceParagraph: !!sourceParagraph, targetParagraph: !!targetParagraph });
+    }
+
+    // Copy color (color style from source to target)
+    if (sourceColor && targetColor) {
+      const sourceComputedStyle = getComputedStyle(sourceColor);
+      const color = sourceComputedStyle.color;
+      // console.log('   🎨 Copying color - color:', color);
+      targetColor.style.color = color;
+      // console.log('   ✅ Color copied');
+    }
+
+    // Copy img-invest image
+    if (targetImgInvest) {
+      if (sourceImgInvest) {
+        const src = sourceImgInvest.getAttribute('src');
+        const alt = sourceImgInvest.getAttribute('alt') || '';
+        // console.log('   📸 Copying img-invest - src:', src, 'alt:', alt);
+        if (src) {
+          targetImgInvest.setAttribute('src', src);
+          targetImgInvest.setAttribute('alt', alt);
+          targetImgInvest.style.display = '';
+          // console.log('   ✅ img-invest copied');
+        } else {
+          targetImgInvest.style.display = 'none';
+        }
+      } else {
+        targetImgInvest.style.display = 'none';
+      }
+    }
+
+    // Copy step text
+    if (sourceStep && targetStep) {
+      const text = sourceStep.textContent;
+      // console.log('   📝 Copying step:', text);
+      targetStep.textContent = text;
+      // console.log('   ✅ Step copied');
+    }
+
+    // Copy date text
+    if (sourceDate && targetDate) {
+      const text = sourceDate.textContent;
+      // console.log('   📝 Copying date:', text);
+      targetDate.textContent = text;
+      // console.log('   ✅ Date copied');
     }
   }
 
