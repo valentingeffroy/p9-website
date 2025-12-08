@@ -276,6 +276,27 @@ const FilterChips = (() => {
     // Détecter le fs-list-field réel une fois au début
     const actualField = getActualField(sourceEl, field);
 
+    // Handle clear buttons in this dropdown - directly clear chips for this dropdown
+    const clearButtons = dropdown.querySelectorAll('[fs-list-element="clear"]');
+    clearButtons.forEach((clearBtn) => {
+      clearBtn.addEventListener('click', () => {
+        // Directly clear chips in this dropdown
+        targetEl.innerHTML = '';
+        targetEl.removeAttribute('aria-label');
+        targetEl.removeAttribute('role');
+        targetEl.style.display = 'none';
+        
+        // Show placeholder
+        const toggle = dropdown.querySelector('.w-dropdown-toggle');
+        if (toggle) {
+          const placeholder = toggle.querySelector('.select-placeholder');
+          if (placeholder) {
+            placeholder.style.removeProperty('display');
+          }
+        }
+      });
+    });
+
     // Schedule rendering with requestAnimationFrame
     let rafId = null;
     const schedule = () => {
