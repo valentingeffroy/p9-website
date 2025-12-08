@@ -203,12 +203,7 @@ const GlobalSite = (() => {
         // Use requestAnimationFrame to ensure transition is applied
         requestAnimationFrame(() => {
           formSection.style.opacity = '0';
-
-          // Hide completely after transition
-          setTimeout(() => {
-            formSection.style.display = 'none';
-            console.log('   ✅ Form section hidden');
-          }, FADEOUT_DURATION);
+          console.log('   ✅ Form section faded out');
         });
       }, MESSAGE_DISPLAY_DURATION);
     });
