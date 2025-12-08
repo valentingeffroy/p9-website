@@ -229,11 +229,12 @@ const FilterChips = (() => {
         console.log(`   ✓ Found ${listInstances.length} Finsweet list instance(s)`);
 
           listInstances.forEach((listInstance) => {
-            // Watch for filter changes using Finsweet API
-            listInstance.watch(
-              () => listInstance.filters,
-              (newFilters, oldFilters) => {
-                console.log('Filters updated:', newFilters, oldFilters);
+            // Use effect() to react to filter changes - automatically tracks dependencies
+            // According to Finsweet docs: effect() runs automatically and tracks reactive dependencies
+            listInstance.effect(() => {
+              // Access filters.value to create a reactive dependency
+              const currentFilters = listInstance.filters.value;
+              console.log('Filters updated (effect):', currentFilters);
               
               // Get all unique field keys from filter inputs only (exclude search fields)
               const allFieldKeys = new Set();
@@ -249,32 +250,12 @@ const FilterChips = (() => {
 
               // Render chips for all fields
               allFieldKeys.forEach((fieldKey) => {
-                const values = getFilterValuesForField(newFilters, fieldKey);
+                const values = getFilterValuesForField(currentFilters, fieldKey);
                 console.log(`🔍 Field "${fieldKey}" has values:`, values);
-                renderChipsForField(fieldKey, newFilters);
+                renderChipsForField(fieldKey, currentFilters);
               });
-            }
-          );
-
-          // Initial render
-          if (listInstance.filters) {
-            console.log('🔍 Initial filters:', listInstance.filters.value);
-            
-            const allFieldKeys = new Set();
-            document.querySelectorAll('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]').forEach((input) => {
-              const fieldKey = input.getAttribute('fs-list-field');
-              if (fieldKey && !fieldKey.includes(',')) {
-                allFieldKeys.add(fieldKey);
-              }
             });
-
-            console.log('📋 Initial field keys found:', Array.from(allFieldKeys));
-
-            allFieldKeys.forEach((fieldKey) => {
-              renderChipsForField(fieldKey, listInstance.filters.value);
-            });
-          }
-        });
+          });
 
         console.log('   ✅ Finsweet integration initialized');
       }
