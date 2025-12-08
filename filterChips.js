@@ -120,20 +120,26 @@ const FilterChips = (() => {
     }
 
     // Find target element for chips in THIS dropdown only
-    // Try multiple selectors: .tags-active-target, .filter_dropdown-toggle-left, or [target] attribute
-    let targetEl = dropdown.querySelector('.tags-active-target');
+    // Must match the target attribute with fieldKey to ensure isolation
+    let targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
+    if (!targetEl) {
+      // Fallback: try class selectors but verify target attribute matches
+      targetEl = dropdown.querySelector('.tags-active-target');
+      if (targetEl && targetEl.getAttribute('target') !== fieldKey) {
+        targetEl = null;
+      }
+    }
     if (!targetEl) {
       targetEl = dropdown.querySelector('.filter_dropdown-toggle-left');
+      if (targetEl && targetEl.getAttribute('target') !== fieldKey) {
+        targetEl = null;
+      }
     }
     if (!targetEl) {
-      // Fallback: find element with target attribute matching fieldKey
-      targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
-    }
-    if (!targetEl) {
-      console.log('   ❌ No targetEl found in dropdown (tried .tags-active-target, .filter_dropdown-toggle-left, [target])');
+      console.log(`   ❌ No targetEl found with target="${fieldKey}" in dropdown`);
       return;
     }
-    console.log('   ✅ targetEl found:', targetEl);
+    console.log(`   ✅ targetEl found with target="${fieldKey}":`, targetEl);
 
     // Find source element (the dropdown list with inputs)
     const sourceEl = dropdown.querySelector('.w-dropdown-list');
