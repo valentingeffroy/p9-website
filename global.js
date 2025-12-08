@@ -178,47 +178,39 @@ const GlobalSite = (() => {
       return;
     }
 
-    console.log('   ✓ Newsletter form, section and success message found');
+    console.log('   ✓ Newsletter form and section found');
 
-    const MESSAGE_DISPLAY_DURATION = 3000; // 3 seconds
+    const MESSAGE_DISPLAY_DURATION = 5000; // 5 seconds
     const FADEOUT_DURATION = 500; // 0.5 seconds
 
     // Set up transition for fade-out
     formSection.style.transition = `opacity ${FADEOUT_DURATION}ms ease`;
 
-    // Observer to detect when success message appears
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const hasSuccessClass = successMessage.classList.contains('w-form-done');
-          
-          if (hasSuccessClass) {
-            console.log('   ✅ Form submitted successfully, waiting 3s before fade-out...');
-            
-            // Wait 3 seconds, then fade out
-            setTimeout(() => {
-              console.log('   🎬 Starting fade-out animation...');
-              
-              // Use requestAnimationFrame to ensure transition is applied
-              requestAnimationFrame(() => {
-                formSection.style.opacity = '0';
-                
-                // Hide completely after transition
-                setTimeout(() => {
-                  formSection.style.display = 'none';
-                  console.log('   ✅ Form section hidden');
-                }, FADEOUT_DURATION);
-              });
-            }, MESSAGE_DISPLAY_DURATION);
-          }
-        }
-      });
-    });
+    // Flag to prevent duplicate executions
+    let fadeOutTriggered = false;
 
-    // Start observing the success message
-    observer.observe(successMessage, {
-      attributes: true,
-      attributeFilter: ['class']
+    // Listen for form submission
+    form.addEventListener('submit', () => {
+      if (fadeOutTriggered) return;
+      fadeOutTriggered = true;
+
+      console.log('   ✅ Form submitted, waiting 5s before fade-out...');
+
+      // Wait 5 seconds, then fade out
+      setTimeout(() => {
+        console.log('   🎬 Starting fade-out animation...');
+
+        // Use requestAnimationFrame to ensure transition is applied
+        requestAnimationFrame(() => {
+          formSection.style.opacity = '0';
+
+          // Hide completely after transition
+          setTimeout(() => {
+            formSection.style.display = 'none';
+            console.log('   ✅ Form section hidden');
+          }, FADEOUT_DURATION);
+        });
+      }, MESSAGE_DISPLAY_DURATION);
     });
 
     console.log('   ✓ Newsletter form fade-out initialized');
