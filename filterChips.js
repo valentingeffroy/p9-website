@@ -240,16 +240,18 @@ const FilterChips = (() => {
     const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
     if (!targetEl) return;
 
-    // Get checked inputs WITHIN this specific dropdown only
-    const inputsInDropdown = dropdown.querySelectorAll(`input[fs-list-field="${fieldKey}"]`);
-    const checkedInputs = Array.from(inputsInDropdown).filter(
-      (input) => input.checked || input.getAttribute('aria-checked') === 'true'
+    // Get labels with is-list-active class WITHIN this specific dropdown only
+    // The class is-list-active is on the label, not the input
+    const allLabels = dropdown.querySelectorAll(`label.w-checkbox`);
+    const activeLabels = Array.from(allLabels).filter(
+      (label) => label.classList.contains('is-list-active')
     );
     
-    // Extract values from checked inputs in this dropdown
-    const filterValues = checkedInputs.map((input) => {
-      return input.getAttribute('fs-list-value') || input.value;
-    });
+    // Extract values from active labels in this dropdown
+    const filterValues = activeLabels.map((label) => {
+      const input = label.querySelector(`input[fs-list-field="${fieldKey}"]`);
+      return input ? (input.getAttribute('fs-list-value') || input.value) : null;
+    }).filter((value) => value !== null);
 
     // Render chips ONLY in this dropdown
     targetEl.innerHTML = '';
@@ -344,10 +346,6 @@ const FilterChips = (() => {
       return;
     }
 
-    // Flag to prevent effect() from interfering with manual updates
-    let isManualUpdate = false;
-    let manualUpdateTimeout = null;
-
     window.FinsweetAttributes ||= [];
     window.FinsweetAttributes.push([
       'list',
@@ -359,25 +357,16 @@ const FilterChips = (() => {
 
         console.log(`   ✓ Found ${listInstances.length} Finsweet list instance(s)`);
 
-          listInstances.forEach((listInstance) => {
-            // Use effect() to react to filter changes - automatically tracks dependencies
-            // According to Finsweet docs: effect() runs automatically and tracks reactive dependencies
-            listInstance.effect(() => {
-              // Skip if we're doing a manual update
-              if (isManualUpdate) {
-                console.log('Skipping effect() - manual update in progress');
-                return;
-              }
-              
-              // Access filters.value to create a reactive dependency
-              const currentFilters = listInstance.filters.value;
-              console.log('Filters updated (effect):', currentFilters);
-              renderAllChips(currentFilters);
-            });
-          });
+          // DISABLED: effect() for chips - we use event listeners based on is-list-active class instead
+          // This prevents interference and ensures each dropdown is updated independently
+          // listInstances.forEach((listInstance) => {
+          //   listInstance.effect(() => {
+          //     const currentFilters = listInstance.filters.value;
+          //     renderAllChips(currentFilters);
+          //   });
+          // });
 
-        // Listen to input changes directly for immediate UI update
-        // This ensures chips update immediately when inputs are checked/unchecked
+        // Listen to checkbox changes - based on is-list-active class on labels
         document.addEventListener('change', (e) => {
           const input = e.target;
           if (input.matches('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]')) {
@@ -387,27 +376,16 @@ const FilterChips = (() => {
               const dropdown = input.closest('.w-dropdown');
               if (dropdown) {
                 console.log('Input changed, re-rendering chips for this dropdown only...');
-                
-                // Set flag to prevent effect() from interfering
-                isManualUpdate = true;
-                if (manualUpdateTimeout) clearTimeout(manualUpdateTimeout);
-                
-                // Use requestAnimationFrame + setTimeout to ensure Finsweet has updated the filters
-                requestAnimationFrame(() => {
-                  setTimeout(() => {
-                    renderChipsForDropdown(dropdown);
-                    // Reset flag after a delay to allow effect() to work again
-                    manualUpdateTimeout = setTimeout(() => {
-                      isManualUpdate = false;
-                    }, 100);
-                  }, 50);
-                });
+                // Small delay to ensure Finsweet has updated the is-list-active class
+                setTimeout(() => {
+                  renderChipsForDropdown(dropdown);
+                }, 20);
               }
             }
           }
         });
 
-        // Listen to clear button clicks for immediate UI update
+        // Listen to clear button clicks
         // Use capture phase to catch all clear buttons
         document.addEventListener('click', (e) => {
           const clearBtn = e.target.closest('[fs-list-element="clear"]');
@@ -418,21 +396,10 @@ const FilterChips = (() => {
               const dropdown = clearBtn.closest('.w-dropdown');
               if (dropdown) {
                 console.log('Clear button clicked, re-rendering chips for this dropdown only...');
-                
-                // Set flag to prevent effect() from interfering
-                isManualUpdate = true;
-                if (manualUpdateTimeout) clearTimeout(manualUpdateTimeout);
-                
-                // Use requestAnimationFrame + setTimeout to ensure Finsweet has unchecked the inputs
-                requestAnimationFrame(() => {
-                  setTimeout(() => {
-                    renderChipsForDropdown(dropdown);
-                    // Reset flag after a delay to allow effect() to work again
-                    manualUpdateTimeout = setTimeout(() => {
-                      isManualUpdate = false;
-                    }, 100);
-                  }, 100);
-                });
+                // Small delay to ensure Finsweet has removed is-list-active classes
+                setTimeout(() => {
+                  renderChipsForDropdown(dropdown);
+                }, 20);
               }
             }
           }
