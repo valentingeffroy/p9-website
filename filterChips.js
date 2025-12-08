@@ -276,15 +276,33 @@ const FilterChips = (() => {
     // Détecter le fs-list-field réel une fois au début
     const actualField = getActualField(sourceEl, field);
 
-    // Handle clear buttons in this dropdown - directly clear chips for this dropdown
+    // Handle clear buttons in this dropdown - clear chips based on fs-list-field
     const clearButtons = dropdown.querySelectorAll('[fs-list-element="clear"]');
     clearButtons.forEach((clearBtn) => {
       clearBtn.addEventListener('click', () => {
-        // Directly clear chips in this dropdown
-        targetEl.innerHTML = '';
-        targetEl.removeAttribute('aria-label');
-        targetEl.removeAttribute('role');
-        targetEl.style.display = 'none';
+        // Get the fs-list-field from the clear button
+        const clearField = clearBtn.getAttribute('fs-list-field');
+        if (!clearField) return;
+        
+        // Find the target element that corresponds to this field in this dropdown
+        // The target has an attribute target="..." that should match the field
+        let targetToClear = dropdown.querySelector(`[target="${clearField}"]`);
+        
+        // If no target found by attribute, check if current targetEl matches
+        if (!targetToClear) {
+          const targetField = targetEl.getAttribute('target');
+          if (targetField === clearField || actualField === clearField) {
+            targetToClear = targetEl;
+          }
+        }
+        
+        // If we found a target, clear only its chips
+        if (targetToClear) {
+          targetToClear.innerHTML = '';
+          targetToClear.removeAttribute('aria-label');
+          targetToClear.removeAttribute('role');
+          targetToClear.style.display = 'none';
+        }
         
         // Show placeholder
         const toggle = dropdown.querySelector('.w-dropdown-toggle');
