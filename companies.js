@@ -38,6 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('   ❌ Error in GridResize.init():', e);
   }
 
+  try {
+    console.log('5️⃣  Initializing Unicorn Sort...');
+    UnicornSort.init();
+  } catch (e) {
+    console.error('   ❌ Error in UnicornSort.init():', e);
+  }
+
   console.log('═════════════════════════════════════════════════════════════');
   console.log('✨ COMPANIES PAGE INITIALIZATION COMPLETE ✨');
   console.log('═════════════════════════════════════════════════════════════');
