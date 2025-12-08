@@ -228,12 +228,12 @@ const FilterChips = (() => {
 
         console.log(`   ✓ Found ${listInstances.length} Finsweet list instance(s)`);
 
-        listInstances.forEach((listInstance) => {
-          // Watch for filter changes
-          listInstance.watch(
-            () => listInstance.filters,
-            (newFilters) => {
-              console.log('🔍 Filters changed:', newFilters);
+          listInstances.forEach((listInstance) => {
+            // Watch for filter changes using Finsweet API
+            listInstance.watch(
+              () => listInstance.filters,
+              (newFilters, oldFilters) => {
+                console.log('Filters updated:', newFilters, oldFilters);
               
               // Get all unique field keys from filter inputs only (exclude search fields)
               const allFieldKeys = new Set();
