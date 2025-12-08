@@ -96,9 +96,17 @@ const FilterChips = (() => {
     }
 
     // Find target element for chips in THIS dropdown only
-    const targetEl = dropdown.querySelector('.tags-active-target');
+    // Try multiple selectors: .tags-active-target, .filter_dropdown-toggle-left, or [target] attribute
+    let targetEl = dropdown.querySelector('.tags-active-target');
     if (!targetEl) {
-      console.log('   ❌ No targetEl (.tags-active-target) found in dropdown');
+      targetEl = dropdown.querySelector('.filter_dropdown-toggle-left');
+    }
+    if (!targetEl) {
+      // Fallback: find element with target attribute matching fieldKey
+      targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
+    }
+    if (!targetEl) {
+      console.log('   ❌ No targetEl found in dropdown (tried .tags-active-target, .filter_dropdown-toggle-left, [target])');
       return;
     }
     console.log('   ✅ targetEl found:', targetEl);
