@@ -154,6 +154,77 @@ const GlobalSite = (() => {
   }
 
   // ========================================================================
+  // NEWSLETTER FORM FADEOUT MODULE
+  // ========================================================================
+
+  function initNewsletterFormFadeOut() {
+    console.log('   📧 Initializing newsletter form fade-out...');
+
+    const form = document.querySelector('form[form-footer="form"]');
+    if (!form) {
+      console.warn('   ⚠️  Newsletter form not found (form[form-footer="form"])');
+      return;
+    }
+
+    const formSection = form.closest('.footer_column.is-form');
+    if (!formSection) {
+      console.warn('   ⚠️  Form section not found (.footer_column.is-form)');
+      return;
+    }
+
+    const successMessage = form.parentElement.querySelector('.form_message-success');
+    if (!successMessage) {
+      console.warn('   ⚠️  Success message element not found (.form_message-success)');
+      return;
+    }
+
+    console.log('   ✓ Newsletter form, section and success message found');
+
+    const MESSAGE_DISPLAY_DURATION = 3000; // 3 seconds
+    const FADEOUT_DURATION = 500; // 0.5 seconds
+
+    // Set up transition for fade-out
+    formSection.style.transition = `opacity ${FADEOUT_DURATION}ms ease`;
+
+    // Observer to detect when success message appears
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const hasSuccessClass = successMessage.classList.contains('w-form-done');
+          
+          if (hasSuccessClass) {
+            console.log('   ✅ Form submitted successfully, waiting 3s before fade-out...');
+            
+            // Wait 3 seconds, then fade out
+            setTimeout(() => {
+              console.log('   🎬 Starting fade-out animation...');
+              
+              // Use requestAnimationFrame to ensure transition is applied
+              requestAnimationFrame(() => {
+                formSection.style.opacity = '0';
+                
+                // Hide completely after transition
+                setTimeout(() => {
+                  formSection.style.display = 'none';
+                  console.log('   ✅ Form section hidden');
+                }, FADEOUT_DURATION);
+              });
+            }, MESSAGE_DISPLAY_DURATION);
+          }
+        }
+      });
+    });
+
+    // Start observing the success message
+    observer.observe(successMessage, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    console.log('   ✓ Newsletter form fade-out initialized');
+  }
+
+  // ========================================================================
   // INITIALIZATION
   // ========================================================================
 
@@ -165,12 +236,14 @@ const GlobalSite = (() => {
       document.addEventListener('DOMContentLoaded', () => {
         initMenuAnimation();
         initNavbarShadow();
+        initNewsletterFormFadeOut();
         console.log('✅ GlobalSite initialized');
       });
     } else {
       // DOM already ready
       initMenuAnimation();
       initNavbarShadow();
+      initNewsletterFormFadeOut();
       console.log('✅ GlobalSite initialized');
     }
   }
