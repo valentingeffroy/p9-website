@@ -44,9 +44,6 @@ const FilterChips = (() => {
     const fieldNode = chip.querySelector('[fs-list-element="tag-field"]');
     if (fieldNode) fieldNode.textContent = field;
 
-    chip.style.webkitUserSelect = 'none';
-    chip.style.userSelect = 'none';
-
     return chip;
   }
 
