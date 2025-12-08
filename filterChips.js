@@ -35,14 +35,43 @@ const FilterChips = (() => {
   // ========================================================================
 
   function makeChip(labelText, field) {
-    const wrap = document.createElement('div');
-    wrap.innerHTML = TAG_TEMPLATE_HTML;
-    const chip = wrap.firstElementChild;
+    // Create chip element with fs-list-element attribute
+    const chip = document.createElement('div');
+    chip.setAttribute('fs-list-element', 'tag');
+    chip.className = 'filter_tag';
+    chip.setAttribute('tabindex', '0');
+    chip.setAttribute('role', 'button');
 
-    (chip.querySelector('[fs-list-element="tag-value"]') || chip).textContent = labelText;
+    // Create tag-value element
+    const tagValue = document.createElement('div');
+    tagValue.setAttribute('fs-list-element', 'tag-value');
+    tagValue.textContent = labelText;
+    chip.appendChild(tagValue);
 
-    const fieldNode = chip.querySelector('[fs-list-element="tag-field"]');
-    if (fieldNode) fieldNode.textContent = field;
+    // Create tag-field element
+    const tagField = document.createElement('div');
+    tagField.setAttribute('fs-list-element', 'tag-field');
+    tagField.className = 'hide';
+    tagField.textContent = field;
+    chip.appendChild(tagField);
+
+    // Create tag-operator element
+    const tagOperator = document.createElement('div');
+    tagOperator.setAttribute('fs-list-element', 'tag-operator');
+    tagOperator.className = 'hide';
+    tagOperator.textContent = '=';
+    chip.appendChild(tagOperator);
+
+    // Create tag-remove element (image)
+    const tagRemove = document.createElement('img');
+    tagRemove.setAttribute('fs-list-element', 'tag-remove');
+    tagRemove.src = 'https://cdn.prod.website-files.com/6821acfa86f43b193f8b39af/683534a85107e966b157069e_Group%2041.svg';
+    tagRemove.loading = 'lazy';
+    tagRemove.alt = '';
+    tagRemove.className = 'filter_tag-remove';
+    tagRemove.setAttribute('role', 'button');
+    tagRemove.setAttribute('tabindex', '0');
+    chip.appendChild(tagRemove);
 
     return chip;
   }
