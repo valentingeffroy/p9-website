@@ -70,137 +70,8 @@ const FilterChips = (() => {
   }
 
   // ========================================================================
-  // CHIP RENDERING
-  // ========================================================================
-
-  function renderChipsForField(fieldKey, filters) {
-    // Find all dropdowns with this field
-    const dropdowns = document.querySelectorAll('.w-dropdown');
-    
-    dropdowns.forEach((dropdown) => {
-      // Check if this dropdown has inputs with this field
-      const hasFieldInputs = dropdown.querySelector(`input[fs-list-field="${fieldKey}"]`);
-      if (!hasFieldInputs) return;
-
-      // Find target element for chips
-      const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
-      if (!targetEl) return;
-
-      // Get checked inputs WITHIN this specific dropdown
-      const inputsInDropdown = dropdown.querySelectorAll(`input[fs-list-field="${fieldKey}"]`);
-      const checkedInputs = Array.from(inputsInDropdown).filter(
-        (input) => input.checked || input.getAttribute('aria-checked') === 'true'
-      );
-      
-      // Extract values from checked inputs in this dropdown
-      const filterValues = checkedInputs.map((input) => {
-        return input.getAttribute('fs-list-value') || input.value;
-      });
-
-      // Render chips
-      targetEl.innerHTML = '';
-
-      if (filterValues.length === 0) {
-        targetEl.removeAttribute('aria-label');
-        targetEl.removeAttribute('role');
-        targetEl.style.display = 'none';
-      } else {
-        targetEl.setAttribute('role', 'group');
-        targetEl.setAttribute('aria-label', 'Active filters');
-        targetEl.style.display = 'flex';
-
-        // First chip
-        const firstVal = filterValues[0];
-        const firstChip = makeChip(firstVal, fieldKey);
-        onPointerActivate(firstChip, () => {
-          // Remove this filter value
-          removeFilterValue(fieldKey, firstVal);
-        });
-        targetEl.appendChild(firstChip);
-
-        // Aggregate chip for remaining values
-        if (filterValues.length > 1) {
-          const extraCount = filterValues.length - 1;
-          const extraVals = filterValues.slice(1);
-
-          const aggChip = makeChip(`+${extraCount} more`, fieldKey);
-          aggChip.classList.add('is-aggregate');
-          aggChip.title = extraVals.join(', ');
-
-          const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
-          const handler = () => {
-            extraVals.forEach((v) => removeFilterValue(fieldKey, v));
-          };
-
-          if (removeEl) {
-            onPointerActivate(removeEl, handler);
-          } else {
-            onPointerActivate(aggChip, handler);
-          }
-
-          targetEl.appendChild(aggChip);
-        }
-      }
-
-      // Update placeholder visibility
-      const toggle = dropdown.querySelector('.w-dropdown-toggle');
-      if (toggle) {
-        const placeholder = toggle.querySelector('.select-placeholder');
-        if (placeholder) {
-          if (filterValues.length > 0) {
-            placeholder.style.display = 'none';
-          } else {
-            placeholder.style.removeProperty('display');
-          }
-        }
-      }
-
-      // Update clear buttons visibility
-      const clearButtons = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${fieldKey}"]`);
-      clearButtons.forEach((clearBtn) => {
-        if (filterValues.length > 0) {
-          clearBtn.style.display = '';
-        } else {
-          clearBtn.style.display = 'none';
-        }
-      });
-    });
-  }
-
-  // ========================================================================
   // FINSWEET INTEGRATION
   // ========================================================================
-
-  function getFilterValuesForField(filters, fieldKey) {
-    const values = [];
-    
-    if (!filters) {
-      console.log(`⚠️ No filters object for field "${fieldKey}"`);
-      return values;
-    }
-    
-    console.log(`🔍 Checking filters for field "${fieldKey}":`, filters);
-    
-    if (filters.groups && Array.isArray(filters.groups)) {
-      filters.groups.forEach((group) => {
-        if (group.conditions && Array.isArray(group.conditions)) {
-          group.conditions.forEach((condition) => {
-            console.log(`🔍 Condition:`, condition);
-            if (condition.fieldKey === fieldKey && condition.value) {
-              if (Array.isArray(condition.value)) {
-                values.push(...condition.value);
-              } else {
-                values.push(String(condition.value));
-              }
-            }
-          });
-        }
-      });
-    }
-
-    console.log(`✅ Values for "${fieldKey}":`, values);
-    return values;
-  }
 
   function removeFilterValue(fieldKey, value) {
     // Find and uncheck the input with this field and value
@@ -213,175 +84,146 @@ const FilterChips = (() => {
     });
   }
 
-  function getAllFieldKeys() {
-    const allFieldKeys = new Set();
-    document.querySelectorAll('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]').forEach((input) => {
-      const fieldKey = input.getAttribute('fs-list-field');
-      // Exclude fields with commas (like "name, fuzzy")
-      if (fieldKey && !fieldKey.includes(',')) {
-        allFieldKeys.add(fieldKey);
-      }
-    });
-    return Array.from(allFieldKeys);
-  }
 
-  function renderChipsForSingleDropdown(dropdown) {
-    console.log('🔍 renderChipsForSingleDropdown called');
-    console.log('   Dropdown element:', dropdown);
-    console.log('   Dropdown ID:', dropdown.id || 'no ID');
-    console.log('   Dropdown classes:', dropdown.className);
-    
+  // ========================================================================
+  // WIRE SINGLE DROPDOWN - Isolated management for each dropdown
+  // ========================================================================
+
+  /**
+   * Sets up complete filter management for a single dropdown.
+   * Wires the relationship between source inputs and target chip display.
+   * Uses requestAnimationFrame with cancellation to prevent multiple renders.
+   */
+  function wireSingleDropdown(dropdown) {
     // Find the fieldKey for this dropdown
     const input = dropdown.querySelector('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]');
-    if (!input) {
-      console.log('   ❌ No input found in dropdown');
-      return;
-    }
+    if (!input) return;
     
     const fieldKey = input.getAttribute('fs-list-field');
-    console.log('   FieldKey found:', fieldKey);
-    if (!fieldKey || fieldKey.includes(',')) {
-      console.log('   ❌ Invalid fieldKey');
-      return;
-    }
+    if (!fieldKey || fieldKey.includes(',')) return;
 
     // Find target element for chips in THIS dropdown only
     const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
-    console.log('   Target element found:', targetEl);
-    console.log('   Target element parent:', targetEl?.parentElement);
-    if (!targetEl) {
-      console.log('   ❌ No target element found');
-      return;
-    }
+    if (!targetEl) return;
 
-    // Get labels with is-list-active class WITHIN this specific dropdown only
-    // The class is-list-active is on the label, not the input
-    const allLabels = dropdown.querySelectorAll(`label.w-checkbox`);
-    console.log('   Total labels in dropdown:', allLabels.length);
-    const activeLabels = Array.from(allLabels).filter(
-      (label) => label.classList.contains('is-list-active')
-    );
-    console.log('   Active labels (with is-list-active):', activeLabels.length);
-    activeLabels.forEach((label, index) => {
-      const labelInput = label.querySelector(`input[fs-list-field="${fieldKey}"]`);
-      const value = labelInput ? (labelInput.getAttribute('fs-list-value') || labelInput.value) : null;
-      console.log(`   Active label ${index + 1}:`, value, label);
-    });
-    
-    // Extract values from active labels in this dropdown
-    const filterValues = activeLabels.map((label) => {
-      const input = label.querySelector(`input[fs-list-field="${fieldKey}"]`);
-      return input ? (input.getAttribute('fs-list-value') || input.value) : null;
-    }).filter((value) => value !== null);
-    
-    console.log('   Filter values extracted:', filterValues);
+    // Find source element (the dropdown list with inputs)
+    const sourceEl = dropdown.querySelector('.w-dropdown-list');
+    if (!sourceEl) return;
 
-    // Render chips ONLY in this dropdown
-    console.log('   🎨 Rendering chips in targetEl:', targetEl);
-    console.log('   TargetEl before clear:', targetEl.innerHTML.substring(0, 100));
-    targetEl.innerHTML = '';
-    console.log('   TargetEl after clear:', targetEl.innerHTML);
+    // === Setup scheduled rendering with requestAnimationFrame ===
+    let rafId = null;
+    const schedule = () => {
+      // Cancel any pending animation frame
+      if (rafId) cancelAnimationFrame(rafId);
+      
+      // Schedule the render to happen on next animation frame
+      rafId = requestAnimationFrame(() => {
+        // Verify elements still exist (they might have been removed from DOM)
+        if (!sourceEl || !targetEl || !document.contains(sourceEl) || !document.contains(targetEl)) {
+          return;
+        }
 
-    if (filterValues.length === 0) {
-      console.log('   ✅ No filter values, hiding targetEl');
-      targetEl.removeAttribute('aria-label');
-      targetEl.removeAttribute('role');
-      targetEl.style.display = 'none';
-    } else {
-      console.log('   ✅ Has filter values, showing chips');
-      targetEl.setAttribute('role', 'group');
-      targetEl.setAttribute('aria-label', 'Active filters');
-      targetEl.style.display = 'flex';
+        // Get labels with is-list-active class WITHIN this specific dropdown only
+        const allLabels = dropdown.querySelectorAll(`label.w-checkbox`);
+        const activeLabels = Array.from(allLabels).filter(
+          (label) => label.classList.contains('is-list-active')
+        );
+        
+        // Extract values from active labels in this dropdown
+        const filterValues = activeLabels.map((label) => {
+          const labelInput = label.querySelector(`input[fs-list-field="${fieldKey}"]`);
+          return labelInput ? (labelInput.getAttribute('fs-list-value') || labelInput.value) : null;
+        }).filter((value) => value !== null);
 
-      // First chip
-      const firstVal = filterValues[0];
-      const firstChip = makeChip(firstVal, fieldKey);
-      onPointerActivate(firstChip, () => {
-        // Remove this filter value
-        removeFilterValue(fieldKey, firstVal);
+        // Render chips
+        targetEl.innerHTML = '';
+
+        if (filterValues.length === 0) {
+          targetEl.removeAttribute('aria-label');
+          targetEl.removeAttribute('role');
+          targetEl.style.display = 'none';
+        } else {
+          targetEl.setAttribute('role', 'group');
+          targetEl.setAttribute('aria-label', 'Active filters');
+          targetEl.style.display = 'flex';
+
+          // First chip
+          const firstVal = filterValues[0];
+          const firstChip = makeChip(firstVal, fieldKey);
+          onPointerActivate(firstChip, () => {
+            removeFilterValue(fieldKey, firstVal);
+          });
+          targetEl.appendChild(firstChip);
+
+          // Aggregate chip for remaining values
+          if (filterValues.length > 1) {
+            const extraCount = filterValues.length - 1;
+            const extraVals = filterValues.slice(1);
+
+            const aggChip = makeChip(`+${extraCount} more`, fieldKey);
+            aggChip.classList.add('is-aggregate');
+            aggChip.title = extraVals.join(', ');
+
+            const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
+            const handler = () => {
+              extraVals.forEach((v) => removeFilterValue(fieldKey, v));
+            };
+
+            if (removeEl) {
+              onPointerActivate(removeEl, handler);
+            } else {
+              onPointerActivate(aggChip, handler);
+            }
+
+            targetEl.appendChild(aggChip);
+          }
+        }
+
+        // Update placeholder visibility
+        const toggle = dropdown.querySelector('.w-dropdown-toggle');
+        if (toggle) {
+          const placeholder = toggle.querySelector('.select-placeholder');
+          if (placeholder) {
+            if (filterValues.length > 0) {
+              placeholder.style.display = 'none';
+            } else {
+              placeholder.style.removeProperty('display');
+            }
+          }
+        }
+
+        // Update clear buttons visibility
+        const clearButtons = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${fieldKey}"]`);
+        clearButtons.forEach((clearBtn) => {
+          if (filterValues.length > 0) {
+            clearBtn.style.display = '';
+          } else {
+            clearBtn.style.display = 'none';
+          }
+        });
       });
-      targetEl.appendChild(firstChip);
-
-      // Aggregate chip for remaining values
-      if (filterValues.length > 1) {
-        const extraCount = filterValues.length - 1;
-        const extraVals = filterValues.slice(1);
-
-        const aggChip = makeChip(`+${extraCount} more`, fieldKey);
-        aggChip.classList.add('is-aggregate');
-        aggChip.title = extraVals.join(', ');
-
-        const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
-        const handler = () => {
-          extraVals.forEach((v) => removeFilterValue(fieldKey, v));
-        };
-
-        if (removeEl) {
-          onPointerActivate(removeEl, handler);
-        } else {
-          onPointerActivate(aggChip, handler);
-        }
-
-        targetEl.appendChild(aggChip);
-      }
-    }
-
-    // Update placeholder visibility ONLY for this dropdown
-    const toggle = dropdown.querySelector('.w-dropdown-toggle');
-    if (toggle) {
-      const placeholder = toggle.querySelector('.select-placeholder');
-      if (placeholder) {
-        if (filterValues.length > 0) {
-          placeholder.style.display = 'none';
-        } else {
-          placeholder.style.removeProperty('display');
-        }
-      }
-    }
-
-    // Update clear buttons visibility ONLY for this dropdown
-    const clearButtons = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${fieldKey}"]`);
-    clearButtons.forEach((clearBtn) => {
-      if (filterValues.length > 0) {
-        clearBtn.style.display = '';
-      } else {
-        clearBtn.style.display = 'none';
-      }
-    });
-  }
-
-  // Debounce function to prevent multiple rapid calls
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
     };
-  }
 
-  // Create a debounced version of renderChipsForSingleDropdown
-  // This prevents multiple rapid re-renders of the same dropdown
-  const debouncedRenderChipsForSingleDropdown = debounce((dropdown) => {
-    renderChipsForSingleDropdown(dropdown);
-  }, 50);
-
-  function renderChipsForDropdown(dropdown) {
-    // Use the debounced version to prevent multiple rapid calls
-    debouncedRenderChipsForSingleDropdown(dropdown);
-  }
-
-  function renderAllChips(filters = null) {
-    const allFieldKeys = getAllFieldKeys();
-    console.log('📋 Field keys found:', allFieldKeys);
-
-    // Render chips for all fields
-    allFieldKeys.forEach((fieldKey) => {
-      renderChipsForField(fieldKey, filters);
+    // === Listen for input change events ONLY in this dropdown ===
+    sourceEl.addEventListener('change', (e) => {
+      const t = e.target;
+      // Only re-render if the changed input belongs to this field
+      if (t?.matches(`input[fs-list-field="${fieldKey}"]`)) {
+        schedule();
+      }
     });
+
+    // === Observe for dynamic DOM changes in this dropdown ===
+    const mo = new MutationObserver(() => schedule());
+    mo.observe(sourceEl, {
+      subtree: true,      // Watch all descendants
+      childList: true,    // Watch for added/removed nodes
+      attributes: true,   // Watch for attribute changes
+      attributeFilter: ['checked', 'class', 'value', 'aria-checked'], // Only these attributes
+    });
+
+    // Perform initial render on setup
+    schedule();
   }
 
   function initFinsweetIntegration() {
@@ -404,106 +246,15 @@ const FilterChips = (() => {
 
         console.log(`   ✓ Found ${listInstances.length} Finsweet list instance(s)`);
 
-          // DISABLED: effect() for chips - we use event listeners based on is-list-active class instead
-          // This prevents interference and ensures each dropdown is updated independently
-          // listInstances.forEach((listInstance) => {
-          //   listInstance.effect(() => {
-          //     const currentFilters = listInstance.filters.value;
-          //     renderAllChips(currentFilters);
-          //   });
-          // });
-
-        // Flag to ignore change events triggered by Finsweet after a clear button click
-        let isClearing = false;
-        let clearingTimeout = null;
-
-        // Listen to checkbox changes - based on is-list-active class on labels
-        document.addEventListener('change', (e) => {
-          // Ignore change events if we just clicked clear (Finsweet triggers cascading changes)
-          if (isClearing) {
-            console.log('🚫 Ignoring change event - clear button was just clicked');
-            return;
-          }
-
-          const input = e.target;
-          if (input.matches('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]')) {
-            console.log('📝 Checkbox changed');
-            console.log('   Input element:', input);
-            console.log('   Input value:', input.getAttribute('fs-list-value') || input.value);
-            
-            const fieldKey = input.getAttribute('fs-list-field');
-            console.log('   Input fieldKey:', fieldKey);
-            if (fieldKey && !fieldKey.includes(',')) {
-              // Find the dropdown that contains this input
-              const dropdown = input.closest('.w-dropdown');
-              console.log('   Dropdown found via closest(.w-dropdown):', dropdown);
-              console.log('   Dropdown ID:', dropdown?.id || 'no ID');
-              
-              if (dropdown) {
-                console.log('✅ Input changed, re-rendering chips for this dropdown only...');
-                // Small delay to ensure Finsweet has updated the is-list-active class
-                setTimeout(() => {
-                  console.log('⏰ Timeout fired, calling renderChipsForDropdown');
-                  renderChipsForDropdown(dropdown);
-                }, 20);
-              } else {
-                console.log('❌ No dropdown found for input');
-              }
-            }
+        // Find all dropdowns and wire each one independently
+        const dropdowns = document.querySelectorAll('.w-dropdown');
+        dropdowns.forEach((dropdown) => {
+          // Check if this dropdown has filter inputs
+          const hasFilterInputs = dropdown.querySelector('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]');
+          if (hasFilterInputs) {
+            wireSingleDropdown(dropdown);
           }
         });
-
-        // Listen to clear button clicks
-        // Use capture phase to catch all clear buttons
-        document.addEventListener('click', (e) => {
-          const clearBtn = e.target.closest('[fs-list-element="clear"]');
-          if (clearBtn) {
-            console.log('🖱️ Clear button clicked');
-            console.log('   Clear button element:', clearBtn);
-            console.log('   Clear button text:', clearBtn.textContent?.trim());
-            console.log('   Clicked element:', e.target);
-            
-            const fieldKey = clearBtn.getAttribute('fs-list-field');
-            console.log('   Clear button fieldKey:', fieldKey);
-            if (fieldKey && !fieldKey.includes(',')) {
-              // Find the dropdown that contains this clear button
-              const dropdown = clearBtn.closest('.w-dropdown');
-              console.log('   Dropdown found via closest(.w-dropdown):', dropdown);
-              console.log('   Dropdown ID:', dropdown?.id || 'no ID');
-              console.log('   Dropdown classes:', dropdown?.className);
-              
-              // Check if there are other dropdowns in the DOM
-              const allDropdowns = document.querySelectorAll('.w-dropdown');
-              console.log('   Total dropdowns in DOM:', allDropdowns.length);
-              allDropdowns.forEach((dd, index) => {
-                const ddFieldKey = dd.querySelector('input[fs-list-field]')?.getAttribute('fs-list-field');
-                console.log(`   Dropdown ${index + 1}: ID=${dd.id || 'no ID'}, fieldKey=${ddFieldKey}`);
-              });
-              
-              if (dropdown) {
-                console.log('✅ Clear button clicked, re-rendering chips for this dropdown only...');
-                
-                // Set flag to ignore change events triggered by Finsweet
-                isClearing = true;
-                if (clearingTimeout) clearTimeout(clearingTimeout);
-                
-                // Small delay to ensure Finsweet has removed is-list-active classes
-                setTimeout(() => {
-                  console.log('⏰ Timeout fired, calling renderChipsForDropdown');
-                  renderChipsForDropdown(dropdown);
-                  
-                  // Reset flag after delay to allow change events again
-                  clearingTimeout = setTimeout(() => {
-                    isClearing = false;
-                    console.log('✅ Clearing flag reset - change events will be processed again');
-                  }, 200);
-                }, 20);
-              } else {
-                console.log('❌ No dropdown found for clear button');
-              }
-            }
-          }
-        }, true); // Use capture phase
 
         console.log('   ✅ Finsweet integration initialized');
       }
