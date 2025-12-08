@@ -229,38 +229,69 @@ const FilterChips = (() => {
   }
 
   function renderChipsForSingleDropdown(dropdown) {
+    console.log('🔍 renderChipsForSingleDropdown called');
+    console.log('   Dropdown element:', dropdown);
+    console.log('   Dropdown ID:', dropdown.id || 'no ID');
+    console.log('   Dropdown classes:', dropdown.className);
+    
     // Find the fieldKey for this dropdown
     const input = dropdown.querySelector('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]');
-    if (!input) return;
+    if (!input) {
+      console.log('   ❌ No input found in dropdown');
+      return;
+    }
     
     const fieldKey = input.getAttribute('fs-list-field');
-    if (!fieldKey || fieldKey.includes(',')) return;
+    console.log('   FieldKey found:', fieldKey);
+    if (!fieldKey || fieldKey.includes(',')) {
+      console.log('   ❌ Invalid fieldKey');
+      return;
+    }
 
     // Find target element for chips in THIS dropdown only
     const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
-    if (!targetEl) return;
+    console.log('   Target element found:', targetEl);
+    console.log('   Target element parent:', targetEl?.parentElement);
+    if (!targetEl) {
+      console.log('   ❌ No target element found');
+      return;
+    }
 
     // Get labels with is-list-active class WITHIN this specific dropdown only
     // The class is-list-active is on the label, not the input
     const allLabels = dropdown.querySelectorAll(`label.w-checkbox`);
+    console.log('   Total labels in dropdown:', allLabels.length);
     const activeLabels = Array.from(allLabels).filter(
       (label) => label.classList.contains('is-list-active')
     );
+    console.log('   Active labels (with is-list-active):', activeLabels.length);
+    activeLabels.forEach((label, index) => {
+      const labelInput = label.querySelector(`input[fs-list-field="${fieldKey}"]`);
+      const value = labelInput ? (labelInput.getAttribute('fs-list-value') || labelInput.value) : null;
+      console.log(`   Active label ${index + 1}:`, value, label);
+    });
     
     // Extract values from active labels in this dropdown
     const filterValues = activeLabels.map((label) => {
       const input = label.querySelector(`input[fs-list-field="${fieldKey}"]`);
       return input ? (input.getAttribute('fs-list-value') || input.value) : null;
     }).filter((value) => value !== null);
+    
+    console.log('   Filter values extracted:', filterValues);
 
     // Render chips ONLY in this dropdown
+    console.log('   🎨 Rendering chips in targetEl:', targetEl);
+    console.log('   TargetEl before clear:', targetEl.innerHTML.substring(0, 100));
     targetEl.innerHTML = '';
+    console.log('   TargetEl after clear:', targetEl.innerHTML);
 
     if (filterValues.length === 0) {
+      console.log('   ✅ No filter values, hiding targetEl');
       targetEl.removeAttribute('aria-label');
       targetEl.removeAttribute('role');
       targetEl.style.display = 'none';
     } else {
+      console.log('   ✅ Has filter values, showing chips');
       targetEl.setAttribute('role', 'group');
       targetEl.setAttribute('aria-label', 'Active filters');
       targetEl.style.display = 'flex';
@@ -370,16 +401,27 @@ const FilterChips = (() => {
         document.addEventListener('change', (e) => {
           const input = e.target;
           if (input.matches('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]')) {
+            console.log('📝 Checkbox changed');
+            console.log('   Input element:', input);
+            console.log('   Input value:', input.getAttribute('fs-list-value') || input.value);
+            
             const fieldKey = input.getAttribute('fs-list-field');
+            console.log('   Input fieldKey:', fieldKey);
             if (fieldKey && !fieldKey.includes(',')) {
               // Find the dropdown that contains this input
               const dropdown = input.closest('.w-dropdown');
+              console.log('   Dropdown found via closest(.w-dropdown):', dropdown);
+              console.log('   Dropdown ID:', dropdown?.id || 'no ID');
+              
               if (dropdown) {
-                console.log('Input changed, re-rendering chips for this dropdown only...');
+                console.log('✅ Input changed, re-rendering chips for this dropdown only...');
                 // Small delay to ensure Finsweet has updated the is-list-active class
                 setTimeout(() => {
+                  console.log('⏰ Timeout fired, calling renderChipsForDropdown');
                   renderChipsForDropdown(dropdown);
                 }, 20);
+              } else {
+                console.log('❌ No dropdown found for input');
               }
             }
           }
@@ -390,16 +432,37 @@ const FilterChips = (() => {
         document.addEventListener('click', (e) => {
           const clearBtn = e.target.closest('[fs-list-element="clear"]');
           if (clearBtn) {
+            console.log('🖱️ Clear button clicked');
+            console.log('   Clear button element:', clearBtn);
+            console.log('   Clear button text:', clearBtn.textContent?.trim());
+            console.log('   Clicked element:', e.target);
+            
             const fieldKey = clearBtn.getAttribute('fs-list-field');
+            console.log('   Clear button fieldKey:', fieldKey);
             if (fieldKey && !fieldKey.includes(',')) {
               // Find the dropdown that contains this clear button
               const dropdown = clearBtn.closest('.w-dropdown');
+              console.log('   Dropdown found via closest(.w-dropdown):', dropdown);
+              console.log('   Dropdown ID:', dropdown?.id || 'no ID');
+              console.log('   Dropdown classes:', dropdown?.className);
+              
+              // Check if there are other dropdowns in the DOM
+              const allDropdowns = document.querySelectorAll('.w-dropdown');
+              console.log('   Total dropdowns in DOM:', allDropdowns.length);
+              allDropdowns.forEach((dd, index) => {
+                const ddFieldKey = dd.querySelector('input[fs-list-field]')?.getAttribute('fs-list-field');
+                console.log(`   Dropdown ${index + 1}: ID=${dd.id || 'no ID'}, fieldKey=${ddFieldKey}`);
+              });
+              
               if (dropdown) {
-                console.log('Clear button clicked, re-rendering chips for this dropdown only...');
+                console.log('✅ Clear button clicked, re-rendering chips for this dropdown only...');
                 // Small delay to ensure Finsweet has removed is-list-active classes
                 setTimeout(() => {
+                  console.log('⏰ Timeout fired, calling renderChipsForDropdown');
                   renderChipsForDropdown(dropdown);
                 }, 20);
+              } else {
+                console.log('❌ No dropdown found for clear button');
               }
             }
           }
