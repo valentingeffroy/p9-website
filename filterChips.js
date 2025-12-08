@@ -344,6 +344,10 @@ const FilterChips = (() => {
       return;
     }
 
+    // Flag to prevent effect() from interfering with manual updates
+    let isManualUpdate = false;
+    let manualUpdateTimeout = null;
+
     window.FinsweetAttributes ||= [];
     window.FinsweetAttributes.push([
       'list',
@@ -359,6 +363,12 @@ const FilterChips = (() => {
             // Use effect() to react to filter changes - automatically tracks dependencies
             // According to Finsweet docs: effect() runs automatically and tracks reactive dependencies
             listInstance.effect(() => {
+              // Skip if we're doing a manual update
+              if (isManualUpdate) {
+                console.log('Skipping effect() - manual update in progress');
+                return;
+              }
+              
               // Access filters.value to create a reactive dependency
               const currentFilters = listInstance.filters.value;
               console.log('Filters updated (effect):', currentFilters);
@@ -377,16 +387,28 @@ const FilterChips = (() => {
               const dropdown = input.closest('.w-dropdown');
               if (dropdown) {
                 console.log('Input changed, re-rendering chips for this dropdown only...');
-                // Use setTimeout to ensure Finsweet has updated the filters
-                setTimeout(() => {
-                  renderChipsForDropdown(dropdown);
-                }, 0);
+                
+                // Set flag to prevent effect() from interfering
+                isManualUpdate = true;
+                if (manualUpdateTimeout) clearTimeout(manualUpdateTimeout);
+                
+                // Use requestAnimationFrame + setTimeout to ensure Finsweet has updated the filters
+                requestAnimationFrame(() => {
+                  setTimeout(() => {
+                    renderChipsForDropdown(dropdown);
+                    // Reset flag after a delay to allow effect() to work again
+                    manualUpdateTimeout = setTimeout(() => {
+                      isManualUpdate = false;
+                    }, 100);
+                  }, 50);
+                });
               }
             }
           }
         });
 
         // Listen to clear button clicks for immediate UI update
+        // Use capture phase to catch all clear buttons
         document.addEventListener('click', (e) => {
           const clearBtn = e.target.closest('[fs-list-element="clear"]');
           if (clearBtn) {
@@ -396,14 +418,25 @@ const FilterChips = (() => {
               const dropdown = clearBtn.closest('.w-dropdown');
               if (dropdown) {
                 console.log('Clear button clicked, re-rendering chips for this dropdown only...');
-                // Use setTimeout to ensure Finsweet has unchecked the inputs
-                setTimeout(() => {
-                  renderChipsForDropdown(dropdown);
-                }, 0);
+                
+                // Set flag to prevent effect() from interfering
+                isManualUpdate = true;
+                if (manualUpdateTimeout) clearTimeout(manualUpdateTimeout);
+                
+                // Use requestAnimationFrame + setTimeout to ensure Finsweet has unchecked the inputs
+                requestAnimationFrame(() => {
+                  setTimeout(() => {
+                    renderChipsForDropdown(dropdown);
+                    // Reset flag after a delay to allow effect() to work again
+                    manualUpdateTimeout = setTimeout(() => {
+                      isManualUpdate = false;
+                    }, 100);
+                  }, 100);
+                });
               }
             }
           }
-        });
+        }, true); // Use capture phase
 
         console.log('   ✅ Finsweet integration initialized');
       }
