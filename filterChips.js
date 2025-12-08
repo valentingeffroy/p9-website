@@ -89,8 +89,16 @@ const FilterChips = (() => {
       const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
       if (!targetEl) return;
 
-      // Get filter values for this field from Finsweet filters
-      const filterValues = getFilterValuesForField(filters, fieldKey);
+      // Get checked inputs WITHIN this specific dropdown
+      const inputsInDropdown = dropdown.querySelectorAll(`input[fs-list-field="${fieldKey}"]`);
+      const checkedInputs = Array.from(inputsInDropdown).filter(
+        (input) => input.checked || input.getAttribute('aria-checked') === 'true'
+      );
+      
+      // Extract values from checked inputs in this dropdown
+      const filterValues = checkedInputs.map((input) => {
+        return input.getAttribute('fs-list-value') || input.value;
+      });
 
       // Render chips
       targetEl.innerHTML = '';
