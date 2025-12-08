@@ -228,16 +228,101 @@ const FilterChips = (() => {
     return Array.from(allFieldKeys);
   }
 
-  function renderChipsForDropdown(dropdown) {
+  function renderChipsForSingleDropdown(dropdown) {
     // Find the fieldKey for this dropdown
     const input = dropdown.querySelector('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]');
     if (!input) return;
     
     const fieldKey = input.getAttribute('fs-list-field');
     if (!fieldKey || fieldKey.includes(',')) return;
+
+    // Find target element for chips in THIS dropdown only
+    const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
+    if (!targetEl) return;
+
+    // Get checked inputs WITHIN this specific dropdown only
+    const inputsInDropdown = dropdown.querySelectorAll(`input[fs-list-field="${fieldKey}"]`);
+    const checkedInputs = Array.from(inputsInDropdown).filter(
+      (input) => input.checked || input.getAttribute('aria-checked') === 'true'
+    );
     
-    // Render chips only for this dropdown's fieldKey
-    renderChipsForField(fieldKey);
+    // Extract values from checked inputs in this dropdown
+    const filterValues = checkedInputs.map((input) => {
+      return input.getAttribute('fs-list-value') || input.value;
+    });
+
+    // Render chips ONLY in this dropdown
+    targetEl.innerHTML = '';
+
+    if (filterValues.length === 0) {
+      targetEl.removeAttribute('aria-label');
+      targetEl.removeAttribute('role');
+      targetEl.style.display = 'none';
+    } else {
+      targetEl.setAttribute('role', 'group');
+      targetEl.setAttribute('aria-label', 'Active filters');
+      targetEl.style.display = 'flex';
+
+      // First chip
+      const firstVal = filterValues[0];
+      const firstChip = makeChip(firstVal, fieldKey);
+      onPointerActivate(firstChip, () => {
+        // Remove this filter value
+        removeFilterValue(fieldKey, firstVal);
+      });
+      targetEl.appendChild(firstChip);
+
+      // Aggregate chip for remaining values
+      if (filterValues.length > 1) {
+        const extraCount = filterValues.length - 1;
+        const extraVals = filterValues.slice(1);
+
+        const aggChip = makeChip(`+${extraCount} more`, fieldKey);
+        aggChip.classList.add('is-aggregate');
+        aggChip.title = extraVals.join(', ');
+
+        const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
+        const handler = () => {
+          extraVals.forEach((v) => removeFilterValue(fieldKey, v));
+        };
+
+        if (removeEl) {
+          onPointerActivate(removeEl, handler);
+        } else {
+          onPointerActivate(aggChip, handler);
+        }
+
+        targetEl.appendChild(aggChip);
+      }
+    }
+
+    // Update placeholder visibility ONLY for this dropdown
+    const toggle = dropdown.querySelector('.w-dropdown-toggle');
+    if (toggle) {
+      const placeholder = toggle.querySelector('.select-placeholder');
+      if (placeholder) {
+        if (filterValues.length > 0) {
+          placeholder.style.display = 'none';
+        } else {
+          placeholder.style.removeProperty('display');
+        }
+      }
+    }
+
+    // Update clear buttons visibility ONLY for this dropdown
+    const clearButtons = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${fieldKey}"]`);
+    clearButtons.forEach((clearBtn) => {
+      if (filterValues.length > 0) {
+        clearBtn.style.display = '';
+      } else {
+        clearBtn.style.display = 'none';
+      }
+    });
+  }
+
+  function renderChipsForDropdown(dropdown) {
+    // Use the single dropdown function instead of looping through all dropdowns
+    renderChipsForSingleDropdown(dropdown);
   }
 
   function renderAllChips(filters = null) {
