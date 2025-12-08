@@ -1,19 +1,83 @@
 /**
  * FILTER CHIPS MODULE
- * Manages visibility of placeholders and clear buttons based on Finsweet filters
- * Finsweet handles chip creation, we only manage UI visibility
+ * Manages filter chip rendering and visibility based on Finsweet filters
  */
 
 const FilterChips = (() => {
   console.log('📦 FilterChips module loading...');
 
-  /**
-   * Update visibility of placeholder and clear buttons for a specific field
-   * @param {string} fieldKey - The field key (e.g., 'collection', 'type')
-   * @param {boolean} hasFilters - Whether there are active filters for this field
-   */
-  function updateFieldVisibility(fieldKey, hasFilters) {
-    // Find all dropdowns that contain inputs with this field
+  // ========================================================================
+  // TEMPLATE
+  // ========================================================================
+  
+  function getTagTemplateHTML() {
+    const native = document.querySelector('[fs-list-element="tag"]');
+    if (native) {
+      console.log('   ℹ️  Using native tag template found on page');
+      return native.outerHTML;
+    }
+
+    console.log('   ℹ️  Using default tag template');
+    return [
+      '<div fs-list-element="tag" class="filter_tag" tabindex="0" role="button">',
+      '<div fs-list-element="tag-value"></div>',
+      '<div fs-list-element="tag-field" class="hide"></div>',
+      '<div fs-list-element="tag-operator" class="hide">=</div>',
+      '<img src="https://cdn.prod.website-files.com/6821acfa86f43b193f8b39af/683534a85107e966b157069e_Group%2041.svg" loading="lazy" fs-list-element="tag-remove" alt="" class="filter_tag-remove" role="button" tabindex="0">',
+      '</div>',
+    ].join('');
+  }
+
+  const TAG_TEMPLATE_HTML = getTagTemplateHTML();
+
+  // ========================================================================
+  // CHIP CREATION
+  // ========================================================================
+
+  function makeChip(labelText, field) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = TAG_TEMPLATE_HTML;
+    const chip = wrap.firstElementChild;
+
+    (chip.querySelector('[fs-list-element="tag-value"]') || chip).textContent = labelText;
+
+    const fieldNode = chip.querySelector('[fs-list-element="tag-field"]');
+    if (fieldNode) fieldNode.textContent = field;
+
+    chip.style.webkitUserSelect = 'none';
+    chip.style.userSelect = 'none';
+
+    return chip;
+  }
+
+  function onPointerActivate(el, handler) {
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handler(e);
+    });
+
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        handler(e);
+      }
+    });
+
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handler(e);
+    });
+  }
+
+  // ========================================================================
+  // CHIP RENDERING
+  // ========================================================================
+
+  function renderChipsForField(fieldKey, filters) {
+    // Find all dropdowns with this field
     const dropdowns = document.querySelectorAll('.w-dropdown');
     
     dropdowns.forEach((dropdown) => {
@@ -21,12 +85,64 @@ const FilterChips = (() => {
       const hasFieldInputs = dropdown.querySelector(`input[fs-list-field="${fieldKey}"]`);
       if (!hasFieldInputs) return;
 
-      // Find placeholder in this dropdown
+      // Find target element for chips
+      const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
+      if (!targetEl) return;
+
+      // Get filter values for this field from Finsweet filters
+      const filterValues = getFilterValuesForField(filters, fieldKey);
+
+      // Render chips
+      targetEl.innerHTML = '';
+
+      if (filterValues.length === 0) {
+        targetEl.removeAttribute('aria-label');
+        targetEl.removeAttribute('role');
+        targetEl.style.display = 'none';
+      } else {
+        targetEl.setAttribute('role', 'group');
+        targetEl.setAttribute('aria-label', 'Active filters');
+        targetEl.style.display = 'flex';
+
+        // First chip
+        const firstVal = filterValues[0];
+        const firstChip = makeChip(firstVal, fieldKey);
+        onPointerActivate(firstChip, () => {
+          // Remove this filter value
+          removeFilterValue(fieldKey, firstVal);
+        });
+        targetEl.appendChild(firstChip);
+
+        // Aggregate chip for remaining values
+        if (filterValues.length > 1) {
+          const extraCount = filterValues.length - 1;
+          const extraVals = filterValues.slice(1);
+
+          const aggChip = makeChip(`+${extraCount} more`, fieldKey);
+          aggChip.classList.add('is-aggregate');
+          aggChip.title = extraVals.join(', ');
+
+          const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
+          const handler = () => {
+            extraVals.forEach((v) => removeFilterValue(fieldKey, v));
+          };
+
+          if (removeEl) {
+            onPointerActivate(removeEl, handler);
+          } else {
+            onPointerActivate(aggChip, handler);
+          }
+
+          targetEl.appendChild(aggChip);
+        }
+      }
+
+      // Update placeholder visibility
       const toggle = dropdown.querySelector('.w-dropdown-toggle');
       if (toggle) {
         const placeholder = toggle.querySelector('.select-placeholder');
         if (placeholder) {
-          if (hasFilters) {
+          if (filterValues.length > 0) {
             placeholder.style.display = 'none';
           } else {
             placeholder.style.removeProperty('display');
@@ -34,10 +150,10 @@ const FilterChips = (() => {
         }
       }
 
-      // Find and update clear buttons with matching fs-list-field
+      // Update clear buttons visibility
       const clearButtons = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${fieldKey}"]`);
       clearButtons.forEach((clearBtn) => {
-        if (hasFilters) {
+        if (filterValues.length > 0) {
           clearBtn.style.display = '';
         } else {
           clearBtn.style.display = 'none';
@@ -46,66 +162,46 @@ const FilterChips = (() => {
     });
   }
 
-  /**
-   * Check if a field has active filters
-   * @param {Object} filters - The filters object from Finsweet
-   * @param {string} fieldKey - The field key to check
-   * @returns {boolean} True if the field has active filters
-   */
-  function hasActiveFiltersForField(filters, fieldKey) {
-    if (!filters || !filters.groups || !Array.isArray(filters.groups)) {
-      return false;
-    }
+  // ========================================================================
+  // FINSWEET INTEGRATION
+  // ========================================================================
 
-    // Check all groups and conditions
-    for (const group of filters.groups) {
-      if (group.conditions && Array.isArray(group.conditions)) {
-        for (const condition of group.conditions) {
-          if (condition.fieldKey === fieldKey && condition.value) {
-            // Check if value is not empty
-            if (Array.isArray(condition.value)) {
-              if (condition.value.length > 0) return true;
-            } else if (String(condition.value).trim() !== '') {
-              return true;
-            }
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Get all unique field keys from filters
-   * @param {Object} filters - The filters object from Finsweet
-   * @returns {Set<string>} Set of unique field keys
-   */
-  function getFieldKeysFromFilters(filters) {
-    const fieldKeys = new Set();
+  function getFilterValuesForField(filters, fieldKey) {
+    const values = [];
     
     if (filters && filters.groups && Array.isArray(filters.groups)) {
       filters.groups.forEach((group) => {
         if (group.conditions && Array.isArray(group.conditions)) {
           group.conditions.forEach((condition) => {
-            if (condition.fieldKey) {
-              fieldKeys.add(condition.fieldKey);
+            if (condition.fieldKey === fieldKey && condition.value) {
+              if (Array.isArray(condition.value)) {
+                values.push(...condition.value);
+              } else {
+                values.push(String(condition.value));
+              }
             }
           });
         }
       });
     }
 
-    return fieldKeys;
+    return values;
   }
 
-  /**
-   * Initialize Finsweet list integration
-   */
+  function removeFilterValue(fieldKey, value) {
+    // Find and uncheck the input with this field and value
+    const inputs = document.querySelectorAll(`input[fs-list-field="${fieldKey}"]`);
+    inputs.forEach((input) => {
+      const inputValue = input.getAttribute('fs-list-value') || input.value;
+      if (inputValue === value && (input.checked || input.getAttribute('aria-checked') === 'true')) {
+        Utils.clickInputOrLabel(input);
+      }
+    });
+  }
+
   function initFinsweetIntegration() {
     console.log('   🔗 Initializing Finsweet integration...');
 
-    // Wait for Finsweet Attributes to be available
     if (!window.FinsweetAttributes) {
       console.warn('   ⚠️  FinsweetAttributes not available yet, waiting...');
       setTimeout(initFinsweetIntegration, 100);
@@ -123,23 +219,12 @@ const FilterChips = (() => {
 
         console.log(`   ✓ Found ${listInstances.length} Finsweet list instance(s)`);
 
-        // For each list instance, observe filter changes
         listInstances.forEach((listInstance) => {
           // Watch for filter changes
           listInstance.watch(
             () => listInstance.filters,
             (newFilters) => {
-              // Get all field keys that have filters
-              const activeFieldKeys = getFieldKeysFromFilters(newFilters);
-
-              // Update visibility for each field
-              activeFieldKeys.forEach((fieldKey) => {
-                const hasFilters = hasActiveFiltersForField(newFilters, fieldKey);
-                updateFieldVisibility(fieldKey, hasFilters);
-              });
-
-              // Also check all fields that might have been cleared
-              // Find all unique field keys from all inputs on the page
+              // Get all unique field keys from inputs on page
               const allFieldKeys = new Set();
               document.querySelectorAll('input[fs-list-field]').forEach((input) => {
                 const fieldKey = input.getAttribute('fs-list-field');
@@ -148,20 +233,25 @@ const FilterChips = (() => {
                 }
               });
 
-              // Update visibility for all fields (active or not)
+              // Render chips for all fields
               allFieldKeys.forEach((fieldKey) => {
-                const hasFilters = hasActiveFiltersForField(newFilters, fieldKey);
-                updateFieldVisibility(fieldKey, hasFilters);
+                renderChipsForField(fieldKey, newFilters);
               });
             }
           );
 
-          // Initial update
+          // Initial render
           if (listInstance.filters) {
-            const activeFieldKeys = getFieldKeysFromFilters(listInstance.filters.value);
-            activeFieldKeys.forEach((fieldKey) => {
-              const hasFilters = hasActiveFiltersForField(listInstance.filters.value, fieldKey);
-              updateFieldVisibility(fieldKey, hasFilters);
+            const allFieldKeys = new Set();
+            document.querySelectorAll('input[fs-list-field]').forEach((input) => {
+              const fieldKey = input.getAttribute('fs-list-field');
+              if (fieldKey) {
+                allFieldKeys.add(fieldKey);
+              }
+            });
+
+            allFieldKeys.forEach((fieldKey) => {
+              renderChipsForField(fieldKey, listInstance.filters.value);
             });
           }
         });
