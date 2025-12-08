@@ -35,36 +35,31 @@ const FilterChips = (() => {
   // ========================================================================
 
   function makeChip(labelText, field) {
-    // Create chip element with fs-list-element attribute
+    // Create chip element (no fs-list-element attributes, we manage chips ourselves)
     const chip = document.createElement('div');
-    chip.setAttribute('fs-list-element', 'tag');
     chip.className = 'filter_tag';
     chip.setAttribute('tabindex', '0');
     chip.setAttribute('role', 'button');
 
     // Create tag-value element
     const tagValue = document.createElement('div');
-    tagValue.setAttribute('fs-list-element', 'tag-value');
     tagValue.textContent = labelText;
     chip.appendChild(tagValue);
 
-    // Create tag-field element
+    // Create tag-field element (hidden, for reference)
     const tagField = document.createElement('div');
-    tagField.setAttribute('fs-list-element', 'tag-field');
     tagField.className = 'hide';
     tagField.textContent = field;
     chip.appendChild(tagField);
 
-    // Create tag-operator element
+    // Create tag-operator element (hidden, for reference)
     const tagOperator = document.createElement('div');
-    tagOperator.setAttribute('fs-list-element', 'tag-operator');
     tagOperator.className = 'hide';
     tagOperator.textContent = '=';
     chip.appendChild(tagOperator);
 
     // Create tag-remove element (image)
     const tagRemove = document.createElement('img');
-    tagRemove.setAttribute('fs-list-element', 'tag-remove');
     tagRemove.src = 'https://cdn.prod.website-files.com/6821acfa86f43b193f8b39af/683534a85107e966b157069e_Group%2041.svg';
     tagRemove.loading = 'lazy';
     tagRemove.alt = '';
@@ -213,7 +208,7 @@ const FilterChips = (() => {
           aggChip.classList.add('is-aggregate');
           aggChip.title = extraVals.join(', ');
 
-          const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
+          const removeEl = aggChip.querySelector('.filter_tag-remove');
           const handler = () => {
             // Simulate click on each label to remove filters
             extraVals.forEach(val => {
