@@ -79,20 +79,37 @@ const FilterChips = (() => {
    * When clicking chip remove button, simulates click on corresponding label.
    */
   function wireSingleDropdown(dropdown) {
+    console.log('🔧 wireSingleDropdown called for dropdown:', dropdown);
+    
     // Find the fieldKey for this dropdown
     const input = dropdown.querySelector('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]');
-    if (!input) return;
+    if (!input) {
+      console.log('   ❌ No input found in dropdown');
+      return;
+    }
     
     const fieldKey = input.getAttribute('fs-list-field');
-    if (!fieldKey || fieldKey.includes(',')) return;
+    console.log('   FieldKey:', fieldKey);
+    if (!fieldKey || fieldKey.includes(',')) {
+      console.log('   ❌ Invalid fieldKey');
+      return;
+    }
 
     // Find target element for chips in THIS dropdown only
     const targetEl = dropdown.querySelector('.tags-active-target');
-    if (!targetEl) return;
+    if (!targetEl) {
+      console.log('   ❌ No targetEl (.tags-active-target) found in dropdown');
+      return;
+    }
+    console.log('   ✅ targetEl found:', targetEl);
 
     // Find source element (the dropdown list with inputs)
     const sourceEl = dropdown.querySelector('.w-dropdown-list');
-    if (!sourceEl) return;
+    if (!sourceEl) {
+      console.log('   ❌ No sourceEl (.w-dropdown-list) found in dropdown');
+      return;
+    }
+    console.log('   ✅ sourceEl found:', sourceEl);
 
     // Function to find label by value
     const findLabelByValue = (value) => {
@@ -107,17 +124,26 @@ const FilterChips = (() => {
 
     // Function to update chips based on is-list-active class
     const updateChips = () => {
+      console.log(`🔄 updateChips called for fieldKey: ${fieldKey}`);
+      
       // Get all labels with is-list-active class in this dropdown
       const allLabels = dropdown.querySelectorAll(`label.w-checkbox`);
+      console.log(`   Total labels in dropdown: ${allLabels.length}`);
+      
       const activeLabels = Array.from(allLabels).filter(
         label => label.classList.contains('is-list-active')
       );
+      console.log(`   Active labels (with is-list-active): ${activeLabels.length}`);
       
       // Extract values from active labels
       const filterValues = activeLabels.map(label => {
         const labelInput = label.querySelector(`input[fs-list-field="${fieldKey}"]`);
-        return labelInput ? (labelInput.getAttribute('fs-list-value') || labelInput.value) : null;
+        const value = labelInput ? (labelInput.getAttribute('fs-list-value') || labelInput.value) : null;
+        console.log(`   Active label value: ${value}`, label);
+        return value;
       }).filter(value => value !== null);
+      
+      console.log(`   Filter values:`, filterValues);
 
       // Clear and rebuild chips
       targetEl.innerHTML = '';
@@ -194,7 +220,8 @@ const FilterChips = (() => {
     };
 
     // Observe changes to is-list-active class on labels
-    const mo = new MutationObserver(() => {
+    const mo = new MutationObserver((mutations) => {
+      console.log(`👀 MutationObserver triggered for fieldKey: ${fieldKey}`, mutations);
       updateChips();
     });
     
@@ -204,17 +231,21 @@ const FilterChips = (() => {
       attributes: true,   // Watch for attribute changes
       attributeFilter: ['class'], // Only watch class changes (for is-list-active)
     });
+    console.log(`   ✅ MutationObserver set up for fieldKey: ${fieldKey}`);
 
     // Also listen to change events for immediate reactivity
     const allInputs = dropdown.querySelectorAll(`input[fs-list-field="${fieldKey}"]`);
+    console.log(`   Found ${allInputs.length} inputs for fieldKey: ${fieldKey}`);
     allInputs.forEach(input => {
       input.addEventListener('change', () => {
+        console.log(`   📝 Change event on input for fieldKey: ${fieldKey}`);
         // Small delay to let Finsweet update is-list-active class
         setTimeout(updateChips, 10);
       });
     });
 
     // Initial render
+    console.log(`   🎬 Calling initial updateChips for fieldKey: ${fieldKey}`);
     updateChips();
   }
 
@@ -240,10 +271,13 @@ const FilterChips = (() => {
 
         // Find all dropdowns and wire each one independently
         const dropdowns = document.querySelectorAll('.w-dropdown');
-        dropdowns.forEach((dropdown) => {
+        console.log(`   Found ${dropdowns.length} dropdown(s) total`);
+        dropdowns.forEach((dropdown, index) => {
           // Check if this dropdown has filter inputs
           const hasFilterInputs = dropdown.querySelector('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]');
+          console.log(`   Dropdown ${index + 1}: hasFilterInputs = ${!!hasFilterInputs}`);
           if (hasFilterInputs) {
+            console.log(`   🚀 Wiring dropdown ${index + 1}...`);
             wireSingleDropdown(dropdown);
           }
         });
