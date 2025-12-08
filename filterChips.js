@@ -353,9 +353,28 @@ const FilterChips = (() => {
     });
   }
 
-  function renderChipsForDropdown(dropdown) {
-    // Use the single dropdown function instead of looping through all dropdowns
+  // Debounce function to prevent multiple rapid calls
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Create a debounced version of renderChipsForSingleDropdown
+  // This prevents multiple rapid re-renders of the same dropdown
+  const debouncedRenderChipsForSingleDropdown = debounce((dropdown) => {
     renderChipsForSingleDropdown(dropdown);
+  }, 50);
+
+  function renderChipsForDropdown(dropdown) {
+    // Use the debounced version to prevent multiple rapid calls
+    debouncedRenderChipsForSingleDropdown(dropdown);
   }
 
   function renderAllChips(filters = null) {
@@ -397,8 +416,18 @@ const FilterChips = (() => {
           //   });
           // });
 
+        // Flag to ignore change events triggered by Finsweet after a clear button click
+        let isClearing = false;
+        let clearingTimeout = null;
+
         // Listen to checkbox changes - based on is-list-active class on labels
         document.addEventListener('change', (e) => {
+          // Ignore change events if we just clicked clear (Finsweet triggers cascading changes)
+          if (isClearing) {
+            console.log('🚫 Ignoring change event - clear button was just clicked');
+            return;
+          }
+
           const input = e.target;
           if (input.matches('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]')) {
             console.log('📝 Checkbox changed');
@@ -456,10 +485,21 @@ const FilterChips = (() => {
               
               if (dropdown) {
                 console.log('✅ Clear button clicked, re-rendering chips for this dropdown only...');
+                
+                // Set flag to ignore change events triggered by Finsweet
+                isClearing = true;
+                if (clearingTimeout) clearTimeout(clearingTimeout);
+                
                 // Small delay to ensure Finsweet has removed is-list-active classes
                 setTimeout(() => {
                   console.log('⏰ Timeout fired, calling renderChipsForDropdown');
                   renderChipsForDropdown(dropdown);
+                  
+                  // Reset flag after delay to allow change events again
+                  clearingTimeout = setTimeout(() => {
+                    isClearing = false;
+                    console.log('✅ Clearing flag reset - change events will be processed again');
+                  }, 200);
                 }, 20);
               } else {
                 console.log('❌ No dropdown found for clear button');
