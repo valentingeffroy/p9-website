@@ -1,396 +1,175 @@
 /**
  * FILTER CHIPS MODULE
- * Manages dynamic filter chip rendering for tags and countries
- * Displays selected filters as clickable chips with "+N more" aggregation
+ * Manages visibility of placeholders and clear buttons based on Finsweet filters
+ * Finsweet handles chip creation, we only manage UI visibility
  */
 
 const FilterChips = (() => {
   console.log('📦 FilterChips module loading...');
 
-  // ========================================================================
-  // CONFIGURATION (Hardcoded selectors)
-  // ========================================================================
-  const GROUPS = [
-    { field: 'tags', sourceSel: '[tag-container="tags"]', targetSel: '[target="tags"]' },
-    { field: 'countries', sourceSel: '[tag-container="countries"]', targetSel: '[target="countries"]' },
-  ];
-
-  // ========================================================================
-  // TEMPLATE
-  // ========================================================================
   /**
-   * Get the chip template HTML
-   * First tries to use native template from page, falls back to default
+   * Update visibility of placeholder and clear buttons for a specific field
+   * @param {string} fieldKey - The field key (e.g., 'collection', 'type')
+   * @param {boolean} hasFilters - Whether there are active filters for this field
    */
-  function getTagTemplateHTML() {
-    const native = document.querySelector('[fs-list-element="tag"]');
-    if (native) {
-      console.log('   ℹ️  Using native tag template found on page');
-      return native.outerHTML;
-    }
-
-    console.log('   ℹ️  Using default tag template');
-    return [
-      '<div fs-list-element="tag" class="filter_tag" tabindex="0" role="button">',
-      '<div fs-list-element="tag-value"></div>',
-      '<div fs-list-element="tag-field" class="hide"></div>',
-      '<div fs-list-element="tag-operator" class="hide">=</div>',
-      '<img src="https://cdn.prod.website-files.com/6821acfa86f43b193f8b39af/683534a85107e966b157069e_Group%2041.svg" loading="lazy" fs-list-element="tag-remove" alt="" class="filter_tag-remove" role="button" tabindex="0">',
-      '</div>',
-    ].join('');
-  }
-
-  const TAG_TEMPLATE_HTML = getTagTemplateHTML();
-
-  // ========================================================================
-  // INPUT FIELD HELPERS
-  // ========================================================================
-
-  /**
-   * Get the actual fs-list-field from inputs in a container
-   * Falls back to the provided field if no inputs found
-   */
-  function getActualField(sourceEl, fallbackField) {
-    const firstInput = sourceEl.querySelector('input[type="checkbox"], input[type="radio"]');
-    return firstInput ? (firstInput.getAttribute('fs-list-field') || fallbackField) : fallbackField;
-  }
-
-  /**
-   * Read all currently selected filter values
-   * Automatically detects the actual fs-list-field from inputs in the container
-   */
-  function readSelectedValues(sourceEl, field) {
-    const actualField = getActualField(sourceEl, field);
+  function updateFieldVisibility(fieldKey, hasFilters) {
+    // Find all dropdowns that contain inputs with this field
+    const dropdowns = document.querySelectorAll('.w-dropdown');
     
-    const selector = [
-      `input[fs-list-field="${actualField}"][type="checkbox"]:checked`,
-      `input[fs-list-field="${actualField}"][type="radio"]:checked`,
-    ].join(',');
+    dropdowns.forEach((dropdown) => {
+      // Check if this dropdown has inputs with this field
+      const hasFieldInputs = dropdown.querySelector(`input[fs-list-field="${fieldKey}"]`);
+      if (!hasFieldInputs) return;
 
-    const vals = new Set();
-    sourceEl.querySelectorAll(selector).forEach((inp) => {
-      const value = (inp.getAttribute('fs-list-value') ?? inp.value ?? '').trim();
-      if (value) vals.add(value);
-    });
-
-    return Array.from(vals);
-  }
-
-  /**
-   * Toggle a filter value on/off
-   * Uses actualField if sourceEl is provided, otherwise uses field
-   */
-  function toggleValue(field, value, sourceEl = null) {
-    const actualField = sourceEl ? getActualField(sourceEl, field) : field;
-    Utils.queryInputsByFieldAndValue(actualField, value).forEach(Utils.clickInputOrLabel);
-  }
-
-  /**
-   * Uncheck a filter value if it's currently selected
-   * Uses actualField if sourceEl is provided, otherwise uses field
-   */
-  function uncheckValueIfChecked(field, value, sourceEl = null) {
-    const actualField = sourceEl ? getActualField(sourceEl, field) : field;
-    Utils.queryInputsByFieldAndValue(actualField, value).forEach((inp) => {
-      const aria = inp.getAttribute('aria-checked');
-      const isOn = inp.checked || aria === 'true';
-      if (isOn) Utils.clickInputOrLabel(inp);
-    });
-  }
-
-  // ========================================================================
-  // CHIP CREATION & EVENTS
-  // ========================================================================
-
-  /**
-   * Create a new filter chip element from template
-   */
-  function makeChip(labelText, field) {
-    const wrap = document.createElement('div');
-    wrap.innerHTML = TAG_TEMPLATE_HTML;
-    const chip = wrap.firstElementChild;
-
-    (chip.querySelector('[fs-list-element="tag-value"]') || chip).textContent = labelText;
-
-    const fieldNode = chip.querySelector('[fs-list-element="tag-field"]');
-    if (fieldNode) fieldNode.textContent = field;
-
-    chip.style.webkitUserSelect = 'none';
-    chip.style.userSelect = 'none';
-
-    return chip;
-  }
-
-  /**
-   * Attach multi-modal event listeners (pointer, keyboard, click)
-   */
-  function onPointerActivate(el, handler) {
-    el.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      handler(e);
-    });
-
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        e.stopPropagation();
-        handler(e);
-      }
-    });
-
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      handler(e);
-    });
-  }
-
-  // ========================================================================
-  // CHIP RENDERING
-  // ========================================================================
-
-  /**
-   * Render filter chips to target container
-   * Handles "+N more" aggregation when multiple filters selected
-   */
-  function renderChips(targetEl, actualField, values, sourceEl) {
-    targetEl.innerHTML = '';
-
-    // No filters: remove accessibility attributes
-    if (!values || values.length === 0) {
-      targetEl.removeAttribute('aria-label');
-      targetEl.removeAttribute('role');
-      return;
-    }
-
-    // Set accessibility attributes when filters active
-    targetEl.setAttribute('role', 'group');
-    targetEl.setAttribute('aria-label', 'Active filters');
-
-    // First chip (always shown)
-    const firstVal = values[0];
-    const firstChip = makeChip(firstVal, actualField);
-    onPointerActivate(firstChip, () => toggleValue(actualField, firstVal, sourceEl));
-    targetEl.appendChild(firstChip);
-
-    // Aggregate chip for remaining values
-    if (values.length > 1) {
-      const extraCount = values.length - 1;
-      const extraVals = values.slice(1);
-
-      const aggChip = makeChip(`+${extraCount} more`, actualField);
-      aggChip.classList.add('is-aggregate');
-      aggChip.title = extraVals.join(', ');
-
-      const removeEl = aggChip.querySelector('[fs-list-element="tag-remove"]');
-
-      const handler = () => {
-        extraVals.forEach((v) => uncheckValueIfChecked(actualField, v, sourceEl));
-      };
-
-      if (removeEl) {
-        onPointerActivate(removeEl, handler);
-      } else {
-        onPointerActivate(aggChip, handler);
-      }
-
-      targetEl.appendChild(aggChip);
-    }
-  }
-
-  // ========================================================================
-  // DROPDOWN RELOCATION
-  // ========================================================================
-
-  /**
-   * Move chip container outside dropdown toggle for proper display
-   * Target is now inside .filter_dropdown-toggle-left, so we don't need to relocate
-   */
-  function relocateTargetOutsideToggle(targetEl) {
-    // Target is now inside .filter_dropdown-toggle-left, no relocation needed
-    // But we can ensure it's in the right place if needed
-    const toggleLeft = targetEl.closest('.filter_dropdown-toggle-left');
-    if (!toggleLeft) {
-      // If not in toggle-left, try to find it and move it there
-      const dropdown = targetEl.closest('.w-dropdown');
-      if (dropdown) {
-        const toggleLeft = dropdown.querySelector('.filter_dropdown-toggle-left');
-        if (toggleLeft && !toggleLeft.contains(targetEl)) {
-          toggleLeft.appendChild(targetEl);
-        }
-      }
-    }
-  }
-
-  // ========================================================================
-  // WIRE GROUP
-  // ========================================================================
-
-  /**
-   * Set up complete filter management for a group (tags or countries)
-   * Handles multiple dropdowns with the same field
-   */
-  function wireGroup({ field, sourceSel, targetSel }) {
-    // Find all source elements (can be multiple dropdowns)
-    const sourceElements = document.querySelectorAll(sourceSel);
-
-    if (sourceElements.length === 0) {
-      console.warn(`   ⚠️  Missing source elements for field "${field}"`, { 
-        sourceCount: sourceElements.length
-      });
-      return;
-    }
-
-    // Match each source with its corresponding target in the same dropdown
-    sourceElements.forEach((sourceEl) => {
-      const dropdown = sourceEl.closest('.w-dropdown');
-      if (!dropdown) return;
-
-      // Find the target element in the same dropdown
-      // First try the specific selector, then try any target element in the dropdown
-      // This handles cases where target="tags" is used for all dropdowns
-      let targetEl = dropdown.querySelector(targetSel);
-      if (!targetEl) {
-        // Fallback: find any target element in the dropdown (in case target attribute doesn't match field)
-        // This is needed when HTML has target="tags" for all dropdowns
-        targetEl = dropdown.querySelector('[target]');
-      }
-      if (!targetEl) {
-        console.warn(`   ⚠️  No target element found in dropdown for field "${field}"`);
-        return;
-      }
-
-      console.log(`   🔗 Wiring filter group: ${field} (found in dropdown)`);
-
-      wireSingleDropdown({ field, sourceEl, targetEl, dropdown });
-    });
-  }
-
-  /**
-   * Wire a single dropdown for filter management
-   */
-  function wireSingleDropdown({ field, sourceEl, targetEl, dropdown }) {
-    relocateTargetOutsideToggle(targetEl);
-
-    // Détecter le fs-list-field réel une fois au début
-    const actualField = getActualField(sourceEl, field);
-
-    // Handle clear buttons in this dropdown - clear chips based on fs-list-field
-    const clearButtons = dropdown.querySelectorAll('[fs-list-element="clear"]');
-    clearButtons.forEach((clearBtn) => {
-      clearBtn.addEventListener('click', () => {
-        // Get the fs-list-field from the clear button
-        const clearField = clearBtn.getAttribute('fs-list-field');
-        if (!clearField) return;
-        
-        // Find the target element that corresponds to this field in this dropdown
-        // The target has an attribute target="..." that should match the field
-        let targetToClear = dropdown.querySelector(`[target="${clearField}"]`);
-        
-        // If no target found by attribute, check if current targetEl matches
-        if (!targetToClear) {
-          const targetField = targetEl.getAttribute('target');
-          if (targetField === clearField || actualField === clearField) {
-            targetToClear = targetEl;
-          }
-        }
-        
-        // If we found a target, clear only its chips
-        if (targetToClear) {
-          targetToClear.innerHTML = '';
-          targetToClear.removeAttribute('aria-label');
-          targetToClear.removeAttribute('role');
-          targetToClear.style.display = 'none';
-        }
-        
-        // Show placeholder
-        const toggle = dropdown.querySelector('.w-dropdown-toggle');
-        if (toggle) {
-          const placeholder = toggle.querySelector('.select-placeholder');
-          if (placeholder) {
+      // Find placeholder in this dropdown
+      const toggle = dropdown.querySelector('.w-dropdown-toggle');
+      if (toggle) {
+        const placeholder = toggle.querySelector('.select-placeholder');
+        if (placeholder) {
+          if (hasFilters) {
+            placeholder.style.display = 'none';
+          } else {
             placeholder.style.removeProperty('display');
           }
         }
+      }
+
+      // Find and update clear buttons with matching fs-list-field
+      const clearButtons = dropdown.querySelectorAll(`[fs-list-element="clear"][fs-list-field="${fieldKey}"]`);
+      clearButtons.forEach((clearBtn) => {
+        if (hasFilters) {
+          clearBtn.style.display = '';
+        } else {
+          clearBtn.style.display = 'none';
+        }
       });
     });
+  }
 
-    // Schedule rendering with requestAnimationFrame
-    let rafId = null;
-    const schedule = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        // Read values only from this specific source element
-        const values = readSelectedValues(sourceEl, field);
-        renderChips(targetEl, actualField, values, sourceEl);
-        
-        // Show/hide placeholder and target based on whether filters are selected
-        const toggle = dropdown.querySelector('.w-dropdown-toggle');
-        if (toggle) {
-          const placeholder = toggle.querySelector('.select-placeholder');
-          
-          if (values.length > 0) {
-            // Show target, hide placeholder
-            targetEl.style.display = 'flex';
-            if (placeholder) {
-              placeholder.style.display = 'none';
-            }
-          } else {
-            // Hide target, show placeholder
-            targetEl.style.display = 'none';
-            if (placeholder) {
-              placeholder.style.removeProperty('display');
+  /**
+   * Check if a field has active filters
+   * @param {Object} filters - The filters object from Finsweet
+   * @param {string} fieldKey - The field key to check
+   * @returns {boolean} True if the field has active filters
+   */
+  function hasActiveFiltersForField(filters, fieldKey) {
+    if (!filters || !filters.groups || !Array.isArray(filters.groups)) {
+      return false;
+    }
+
+    // Check all groups and conditions
+    for (const group of filters.groups) {
+      if (group.conditions && Array.isArray(group.conditions)) {
+        for (const condition of group.conditions) {
+          if (condition.fieldKey === fieldKey && condition.value) {
+            // Check if value is not empty
+            if (Array.isArray(condition.value)) {
+              if (condition.value.length > 0) return true;
+            } else if (String(condition.value).trim() !== '') {
+              return true;
             }
           }
         }
-        
-        // Show/hide filter-clear elements in this dropdown based on whether filters are selected
-        // Find all clear elements in this dropdown (regardless of fs-list-field value)
-        // This handles cases where fs-list-field doesn't match the field (e.g., fs-list-field="tags" for all dropdowns)
-        const filterClearElements = dropdown.querySelectorAll('[fs-list-element="clear"]');
-        filterClearElements.forEach((el) => {
-          if (values.length > 0) {
-            el.style.display = '';
-          } else {
-            el.style.display = 'none';
-          }
-        });
-      });
-    };
-
-    // Listen for input change events - utiliser actualField
-    sourceEl.addEventListener('change', (e) => {
-      const t = e.target;
-      if (t?.matches(`input[fs-list-field="${actualField}"]`)) {
-        schedule();
       }
-    });
+    }
 
-    // Observe for dynamic DOM changes (pagination)
-    const mo = new MutationObserver(() => schedule());
-    mo.observe(sourceEl, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ['checked', 'class', 'value', 'aria-checked'],
-    });
-
-    // Initial render
-    schedule();
+    return false;
   }
 
-  // ========================================================================
-  // CLEAR FILTERS HANDLER
-  // ========================================================================
-  // NOTE: Finsweet Attributes gère automatiquement les boutons clear
-  // avec fs-list-element="clear". On ne gère que l'affichage/masquage
-  // des boutons clear dans wireSingleDropdown().
-  // 
-  // Pour que Finsweet gère correctement les clears, assurez-vous que :
-  // - Les boutons clear ont fs-list-element="clear"
-  // - Si clear d'un champ spécifique : ajoutez fs-list-field="IDENTIFIER"
-  //   (le même que les inputs dans le conteneur)
-  // - Si clear de tous les champs : pas de fs-list-field sur le bouton
+  /**
+   * Get all unique field keys from filters
+   * @param {Object} filters - The filters object from Finsweet
+   * @returns {Set<string>} Set of unique field keys
+   */
+  function getFieldKeysFromFilters(filters) {
+    const fieldKeys = new Set();
+    
+    if (filters && filters.groups && Array.isArray(filters.groups)) {
+      filters.groups.forEach((group) => {
+        if (group.conditions && Array.isArray(group.conditions)) {
+          group.conditions.forEach((condition) => {
+            if (condition.fieldKey) {
+              fieldKeys.add(condition.fieldKey);
+            }
+          });
+        }
+      });
+    }
+
+    return fieldKeys;
+  }
+
+  /**
+   * Initialize Finsweet list integration
+   */
+  function initFinsweetIntegration() {
+    console.log('   🔗 Initializing Finsweet integration...');
+
+    // Wait for Finsweet Attributes to be available
+    if (!window.FinsweetAttributes) {
+      console.warn('   ⚠️  FinsweetAttributes not available yet, waiting...');
+      setTimeout(initFinsweetIntegration, 100);
+      return;
+    }
+
+    window.FinsweetAttributes ||= [];
+    window.FinsweetAttributes.push([
+      'list',
+      (listInstances) => {
+        if (!listInstances || listInstances.length === 0) {
+          console.warn('   ⚠️  No Finsweet list instances found');
+          return;
+        }
+
+        console.log(`   ✓ Found ${listInstances.length} Finsweet list instance(s)`);
+
+        // For each list instance, observe filter changes
+        listInstances.forEach((listInstance) => {
+          // Watch for filter changes
+          listInstance.watch(
+            () => listInstance.filters,
+            (newFilters) => {
+              // Get all field keys that have filters
+              const activeFieldKeys = getFieldKeysFromFilters(newFilters);
+
+              // Update visibility for each field
+              activeFieldKeys.forEach((fieldKey) => {
+                const hasFilters = hasActiveFiltersForField(newFilters, fieldKey);
+                updateFieldVisibility(fieldKey, hasFilters);
+              });
+
+              // Also check all fields that might have been cleared
+              // Find all unique field keys from all inputs on the page
+              const allFieldKeys = new Set();
+              document.querySelectorAll('input[fs-list-field]').forEach((input) => {
+                const fieldKey = input.getAttribute('fs-list-field');
+                if (fieldKey) {
+                  allFieldKeys.add(fieldKey);
+                }
+              });
+
+              // Update visibility for all fields (active or not)
+              allFieldKeys.forEach((fieldKey) => {
+                const hasFilters = hasActiveFiltersForField(newFilters, fieldKey);
+                updateFieldVisibility(fieldKey, hasFilters);
+              });
+            }
+          );
+
+          // Initial update
+          if (listInstance.filters) {
+            const activeFieldKeys = getFieldKeysFromFilters(listInstance.filters.value);
+            activeFieldKeys.forEach((fieldKey) => {
+              const hasFilters = hasActiveFiltersForField(listInstance.filters.value, fieldKey);
+              updateFieldVisibility(fieldKey, hasFilters);
+            });
+          }
+        });
+
+        console.log('   ✅ Finsweet integration initialized');
+      }
+    ]);
+  }
 
   // ========================================================================
   // CLOSE DROPDOWN HANDLER
@@ -468,12 +247,11 @@ const FilterChips = (() => {
   // ========================================================================
 
   /**
-   * Initialize all filter groups
+   * Initialize filter chips module
    */
   function init() {
     console.log('🚀 FilterChips.init() called');
-    GROUPS.forEach(wireGroup);
-    // initClearFilterHandlers() supprimé - Finsweet gère les clears automatiquement
+    initFinsweetIntegration();
     initCloseDropdownHandlers();
     console.log('✅ FilterChips initialized');
   }
