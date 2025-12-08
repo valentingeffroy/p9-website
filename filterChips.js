@@ -216,6 +216,28 @@ const FilterChips = (() => {
     });
   }
 
+  function getAllFieldKeys() {
+    const allFieldKeys = new Set();
+    document.querySelectorAll('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]').forEach((input) => {
+      const fieldKey = input.getAttribute('fs-list-field');
+      // Exclude fields with commas (like "name, fuzzy")
+      if (fieldKey && !fieldKey.includes(',')) {
+        allFieldKeys.add(fieldKey);
+      }
+    });
+    return Array.from(allFieldKeys);
+  }
+
+  function renderAllChips(filters = null) {
+    const allFieldKeys = getAllFieldKeys();
+    console.log('📋 Field keys found:', allFieldKeys);
+
+    // Render chips for all fields
+    allFieldKeys.forEach((fieldKey) => {
+      renderChipsForField(fieldKey, filters);
+    });
+  }
+
   function initFinsweetIntegration() {
     console.log('   🔗 Initializing Finsweet integration...');
 
@@ -243,27 +265,40 @@ const FilterChips = (() => {
               // Access filters.value to create a reactive dependency
               const currentFilters = listInstance.filters.value;
               console.log('Filters updated (effect):', currentFilters);
-              
-              // Get all unique field keys from filter inputs only (exclude search fields)
-              const allFieldKeys = new Set();
-              document.querySelectorAll('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]').forEach((input) => {
-                const fieldKey = input.getAttribute('fs-list-field');
-                // Exclude fields with commas (like "name, fuzzy")
-                if (fieldKey && !fieldKey.includes(',')) {
-                  allFieldKeys.add(fieldKey);
-                }
-              });
-
-              console.log('📋 Field keys found:', Array.from(allFieldKeys));
-
-              // Render chips for all fields
-              allFieldKeys.forEach((fieldKey) => {
-                const values = getFilterValuesForField(currentFilters, fieldKey);
-                console.log(`🔍 Field "${fieldKey}" has values:`, values);
-                renderChipsForField(fieldKey, currentFilters);
-              });
+              renderAllChips(currentFilters);
             });
           });
+
+        // Listen to input changes directly for immediate UI update
+        // This ensures chips update immediately when inputs are checked/unchecked
+        document.addEventListener('change', (e) => {
+          const input = e.target;
+          if (input.matches('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]')) {
+            const fieldKey = input.getAttribute('fs-list-field');
+            if (fieldKey && !fieldKey.includes(',')) {
+              console.log('Input changed, re-rendering chips...');
+              // Use setTimeout to ensure Finsweet has updated the filters
+              setTimeout(() => {
+                renderAllChips();
+              }, 0);
+            }
+          }
+        });
+
+        // Listen to clear button clicks for immediate UI update
+        document.addEventListener('click', (e) => {
+          const clearBtn = e.target.closest('[fs-list-element="clear"]');
+          if (clearBtn) {
+            const fieldKey = clearBtn.getAttribute('fs-list-field');
+            if (fieldKey && !fieldKey.includes(',')) {
+              console.log('Clear button clicked, re-rendering chips...');
+              // Use setTimeout to ensure Finsweet has unchecked the inputs
+              setTimeout(() => {
+                renderAllChips();
+              }, 0);
+            }
+          }
+        });
 
         console.log('   ✅ Finsweet integration initialized');
       }
