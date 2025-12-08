@@ -169,10 +169,18 @@ const FilterChips = (() => {
   function getFilterValuesForField(filters, fieldKey) {
     const values = [];
     
-    if (filters && filters.groups && Array.isArray(filters.groups)) {
+    if (!filters) {
+      console.log(`⚠️ No filters object for field "${fieldKey}"`);
+      return values;
+    }
+    
+    console.log(`🔍 Checking filters for field "${fieldKey}":`, filters);
+    
+    if (filters.groups && Array.isArray(filters.groups)) {
       filters.groups.forEach((group) => {
         if (group.conditions && Array.isArray(group.conditions)) {
           group.conditions.forEach((condition) => {
+            console.log(`🔍 Condition:`, condition);
             if (condition.fieldKey === fieldKey && condition.value) {
               if (Array.isArray(condition.value)) {
                 values.push(...condition.value);
@@ -185,6 +193,7 @@ const FilterChips = (() => {
       });
     }
 
+    console.log(`✅ Values for "${fieldKey}":`, values);
     return values;
   }
 
@@ -224,17 +233,24 @@ const FilterChips = (() => {
           listInstance.watch(
             () => listInstance.filters,
             (newFilters) => {
-              // Get all unique field keys from inputs on page
+              console.log('🔍 Filters changed:', newFilters);
+              
+              // Get all unique field keys from filter inputs only (exclude search fields)
               const allFieldKeys = new Set();
-              document.querySelectorAll('input[fs-list-field]').forEach((input) => {
+              document.querySelectorAll('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]').forEach((input) => {
                 const fieldKey = input.getAttribute('fs-list-field');
-                if (fieldKey) {
+                // Exclude fields with commas (like "name, fuzzy")
+                if (fieldKey && !fieldKey.includes(',')) {
                   allFieldKeys.add(fieldKey);
                 }
               });
 
+              console.log('📋 Field keys found:', Array.from(allFieldKeys));
+
               // Render chips for all fields
               allFieldKeys.forEach((fieldKey) => {
+                const values = getFilterValuesForField(newFilters, fieldKey);
+                console.log(`🔍 Field "${fieldKey}" has values:`, values);
                 renderChipsForField(fieldKey, newFilters);
               });
             }
@@ -242,13 +258,17 @@ const FilterChips = (() => {
 
           // Initial render
           if (listInstance.filters) {
+            console.log('🔍 Initial filters:', listInstance.filters.value);
+            
             const allFieldKeys = new Set();
-            document.querySelectorAll('input[fs-list-field]').forEach((input) => {
+            document.querySelectorAll('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]').forEach((input) => {
               const fieldKey = input.getAttribute('fs-list-field');
-              if (fieldKey) {
+              if (fieldKey && !fieldKey.includes(',')) {
                 allFieldKeys.add(fieldKey);
               }
             });
+
+            console.log('📋 Initial field keys found:', Array.from(allFieldKeys));
 
             allFieldKeys.forEach((fieldKey) => {
               renderChipsForField(fieldKey, listInstance.filters.value);
