@@ -228,6 +228,18 @@ const FilterChips = (() => {
     return Array.from(allFieldKeys);
   }
 
+  function renderChipsForDropdown(dropdown) {
+    // Find the fieldKey for this dropdown
+    const input = dropdown.querySelector('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]');
+    if (!input) return;
+    
+    const fieldKey = input.getAttribute('fs-list-field');
+    if (!fieldKey || fieldKey.includes(',')) return;
+    
+    // Render chips only for this dropdown's fieldKey
+    renderChipsForField(fieldKey);
+  }
+
   function renderAllChips(filters = null) {
     const allFieldKeys = getAllFieldKeys();
     console.log('📋 Field keys found:', allFieldKeys);
@@ -276,11 +288,15 @@ const FilterChips = (() => {
           if (input.matches('input[fs-list-field][type="checkbox"], input[fs-list-field][type="radio"]')) {
             const fieldKey = input.getAttribute('fs-list-field');
             if (fieldKey && !fieldKey.includes(',')) {
-              console.log('Input changed, re-rendering chips...');
-              // Use setTimeout to ensure Finsweet has updated the filters
-              setTimeout(() => {
-                renderAllChips();
-              }, 0);
+              // Find the dropdown that contains this input
+              const dropdown = input.closest('.w-dropdown');
+              if (dropdown) {
+                console.log('Input changed, re-rendering chips for this dropdown only...');
+                // Use setTimeout to ensure Finsweet has updated the filters
+                setTimeout(() => {
+                  renderChipsForDropdown(dropdown);
+                }, 0);
+              }
             }
           }
         });
@@ -291,11 +307,15 @@ const FilterChips = (() => {
           if (clearBtn) {
             const fieldKey = clearBtn.getAttribute('fs-list-field');
             if (fieldKey && !fieldKey.includes(',')) {
-              console.log('Clear button clicked, re-rendering chips...');
-              // Use setTimeout to ensure Finsweet has unchecked the inputs
-              setTimeout(() => {
-                renderAllChips();
-              }, 0);
+              // Find the dropdown that contains this clear button
+              const dropdown = clearBtn.closest('.w-dropdown');
+              if (dropdown) {
+                console.log('Clear button clicked, re-rendering chips for this dropdown only...');
+                // Use setTimeout to ensure Finsweet has unchecked the inputs
+                setTimeout(() => {
+                  renderChipsForDropdown(dropdown);
+                }, 0);
+              }
             }
           }
         });
