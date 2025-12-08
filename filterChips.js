@@ -103,7 +103,8 @@ const FilterChips = (() => {
     if (!fieldKey || fieldKey.includes(',')) return;
 
     // Find target element for chips in THIS dropdown only
-    const targetEl = dropdown.querySelector(`[target="${fieldKey}"]`);
+    // Use class selector as target attribute may not match fieldKey (e.g., fieldKey="country" but target="countries")
+    const targetEl = dropdown.querySelector('.tags-active-target');
     if (!targetEl) return;
 
     // Find source element (the dropdown list with inputs)
