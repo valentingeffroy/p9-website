@@ -186,14 +186,22 @@ const GlobalSite = (() => {
     // Set up transition for fade-out
     formSection.style.transition = `opacity ${FADEOUT_DURATION}ms ease`;
 
+    // Flag to prevent duplicate fade-out executions
+    let fadeOutTriggered = false;
+
     // Observer to detect when success message appears
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
           const hasSuccessClass = successMessage.classList.contains('w-form-done');
           
-          if (hasSuccessClass) {
+          // Only trigger if success class is present and fade-out hasn't been triggered yet
+          if (hasSuccessClass && !fadeOutTriggered) {
+            fadeOutTriggered = true;
             console.log('   ✅ Form submitted successfully, waiting 3s before fade-out...');
+            
+            // Disconnect observer to prevent further executions
+            observer.disconnect();
             
             // Wait 3 seconds, then fade out
             setTimeout(() => {
