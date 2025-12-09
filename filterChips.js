@@ -160,28 +160,43 @@ const FilterChips = (() => {
             }
             
             // ÉTAPE 2 : Reset via l'API Finsweet pour synchroniser les filtres
-            // Log des filtres avant le reset
-            const filtersBefore = JSON.parse(JSON.stringify(listInstance.filters?.value || {}));
-            console.log('📊 Filters before reset:', filtersBefore);
+            // Log des filtres avant le reset (sans cloner pour éviter DataCloneError)
+            const filtersBefore = listInstance.filters?.value;
+            console.log('📊 Filters before reset:', {
+              groupsCount: filtersBefore?.groups?.length || 0,
+              conditions: filtersBefore?.groups?.flatMap(g => g.conditions.map(c => ({
+                fieldKey: c.fieldKey,
+                value: c.value
+              }))) || []
+            });
             
+            // Modifier les filtres de manière sûre
             if (listInstance.filters?.value?.groups) {
-              listInstance.filters.value.groups = listInstance.filters.value.groups.map(group => {
-                const filteredConditions = group.conditions.filter(
-                  condition => condition.fieldKey !== field
-                );
-                return filteredConditions.length > 0 
-                  ? { ...group, conditions: filteredConditions }
-                  : null;
-              }).filter(group => group !== null);
+              // Créer un nouveau tableau de groupes pour éviter la mutation directe
+              const newGroups = listInstance.filters.value.groups
+                .map(group => {
+                  const filteredConditions = group.conditions.filter(
+                    condition => condition.fieldKey !== field
+                  );
+                  return filteredConditions.length > 0 
+                    ? { ...group, conditions: filteredConditions }
+                    : null;
+                })
+                .filter(group => group !== null);
               
-              if (listInstance.filters.value.groups.length === 0) {
-                listInstance.filters.value.groups = [];
-              }
+              // Assigner le nouveau tableau
+              listInstance.filters.value.groups = newGroups;
             }
             
-            // Log des filtres après le reset
-            const filtersAfter = JSON.parse(JSON.stringify(listInstance.filters?.value || {}));
-            console.log('📊 Filters after reset:', filtersAfter);
+            // Log des filtres après le reset (sans cloner)
+            const filtersAfter = listInstance.filters?.value;
+            console.log('📊 Filters after reset:', {
+              groupsCount: filtersAfter?.groups?.length || 0,
+              conditions: filtersAfter?.groups?.flatMap(g => g.conditions.map(c => ({
+                fieldKey: c.fieldKey,
+                value: c.value
+              }))) || []
+            });
             
             // Log des filtres actifs restants
             const activeFilters = [];
