@@ -123,7 +123,14 @@ const FilterChips = (() => {
           return;
         }
         
-        console.log(`✅ Checkbox checked with value: "${value}"`);
+        // Récupérer le field de la checkbox (important pour trouver le target)
+        const field = checkboxEl.getAttribute('fs-list-field');
+        if (!field) {
+          console.warn('⚠️  Checkbox has no fs-list-field attribute');
+          return;
+        }
+        
+        console.log(`✅ Checkbox checked - field: "${field}", value: "${value}"`);
         
         // Trouver le dropdown parent
         const dropdown = checkboxEl.closest('.w-dropdown');
@@ -132,10 +139,10 @@ const FilterChips = (() => {
           return;
         }
         
-        // Trouver l'élément target avec target="chips" et target-value correspondant
-        const targetEl = dropdown.querySelector(`[target="chips"][target-value="${value}"]`);
+        // Trouver l'élément target avec target="chips" et target-value correspondant au FIELD
+        const targetEl = dropdown.querySelector(`[target="chips"][target-value="${field}"]`);
         if (!targetEl) {
-          console.warn(`⚠️  No target element found with target="chips" and target-value="${value}" in dropdown`);
+          console.warn(`⚠️  No target element found with target="chips" and target-value="${field}" in dropdown`);
           return;
         }
         
