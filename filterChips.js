@@ -163,6 +163,96 @@ const FilterChips = (() => {
   }
 
   // ========================================================================
+  // CHIP REMOVAL
+  // ========================================================================
+
+  /**
+   * Initialize chip removal handlers
+   * When clicking on a custom chip, unchecks the corresponding checkbox
+   * For "+N more" chips, unchecks all checkboxes except the first one
+   */
+  function initChipRemoval() {
+    // Utiliser la délégation d'événement car les chips sont créés dynamiquement
+    document.addEventListener('click', (e) => {
+      // Vérifier si le clic est sur une chip custom (dans un élément target avec target="chips")
+      const clickedChip = e.target.closest('[fs-list-element="tag"]');
+      if (!clickedChip) {
+        return;
+      }
+      
+      // Vérifier que la chip est dans un élément target (nos chips custom)
+      const targetEl = clickedChip.closest('[target="chips"]');
+      if (!targetEl) {
+        // Si la chip n'est pas dans un target, c'est probablement un tag Finsweet, on ne fait rien
+        return;
+      }
+      
+      // Récupérer la valeur de la chip cliquée
+      const valueEl = clickedChip.querySelector('[fs-list-element="tag-value"]');
+      if (!valueEl) {
+        console.warn('⚠️  Chip has no tag-value element');
+        return;
+      }
+      
+      const chipValue = valueEl.textContent.trim();
+      const dropdown = targetEl.closest('.w-dropdown');
+      if (!dropdown) {
+        console.warn('⚠️  No dropdown found');
+        return;
+      }
+      
+      // Récupérer le field depuis target-value
+      const field = targetEl.getAttribute('target-value');
+      if (!field) {
+        console.warn('⚠️  Target has no target-value attribute');
+        return;
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Si c'est une chip "+N more"
+      if (chipValue.startsWith('+') && chipValue.includes('more')) {
+        console.log(`🖱️  "+N more" chip clicked, removing all except first`);
+        
+        // Récupérer toutes les checkboxes cochées pour ce field
+        const checkedCheckboxes = Array.from(
+          dropdown.querySelectorAll(`input[fs-list-field="${field}"][type="checkbox"]:checked`)
+        );
+        
+        // Décocher toutes sauf la première
+        if (checkedCheckboxes.length > 1) {
+          for (let i = 1; i < checkedCheckboxes.length; i++) {
+            checkedCheckboxes[i].checked = false;
+            // Déclencher l'événement change pour que notre listener mette à jour l'affichage
+            checkedCheckboxes[i].dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+      } else {
+        // C'est une chip normale, trouver la checkbox correspondante et la décocher
+        console.log(`🖱️  Chip clicked: "${chipValue}"`);
+        
+        // Trouver la checkbox avec cette valeur
+        const checkbox = dropdown.querySelector(
+          `input[fs-list-field="${field}"][fs-list-value="${chipValue}"][type="checkbox"]`
+        );
+        
+        if (!checkbox) {
+          console.warn(`⚠️  No checkbox found for value: "${chipValue}"`);
+          return;
+        }
+        
+        // Décocher la checkbox
+        checkbox.checked = false;
+        // Déclencher l'événement change pour que notre listener mette à jour l'affichage
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    
+    console.log('🔧 Chip removal handlers initialized');
+  }
+
+  // ========================================================================
   // CHIP CREATION
   // ========================================================================
 
@@ -218,6 +308,7 @@ const FilterChips = (() => {
   function init() {
     initCloseDropdownHandlers();
     initChipCreation();
+    initChipRemoval();
   }
 
   return { init };
