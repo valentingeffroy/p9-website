@@ -94,6 +94,75 @@ const FilterChips = (() => {
   }
 
   // ========================================================================
+  // CHIP DISPLAY MANAGEMENT
+  // ========================================================================
+
+  /**
+   * Update chips display in target element
+   * Shows first chip value, then "+N more" for remaining chips
+   * @param {HTMLElement} targetEl - Target element where chips are displayed
+   * @param {string} field - Field name (fs-list-field value)
+   * @param {HTMLElement} dropdown - Dropdown container
+   */
+  function updateChipsDisplay(targetEl, field, dropdown) {
+    // Récupérer toutes les checkboxes cochées pour ce field dans ce dropdown
+    const checkedCheckboxes = Array.from(
+      dropdown.querySelectorAll(`input[fs-list-field="${field}"][type="checkbox"]:checked`)
+    );
+    
+    // Vider le targetEl
+    targetEl.innerHTML = '';
+    
+    // Si aucune checkbox cochée, on ne fait rien (le placeholder sera géré ailleurs)
+    if (checkedCheckboxes.length === 0) {
+      return;
+    }
+    
+    // Récupérer les valeurs des checkboxes cochées
+    const values = checkedCheckboxes.map(cb => {
+      return cb.getAttribute('fs-list-value') || cb.value;
+    }).filter(Boolean);
+    
+    if (values.length === 0) {
+      return;
+    }
+    
+    // Créer la première chip avec la première valeur
+    const firstValue = values[0];
+    const wrap1 = document.createElement('div');
+    wrap1.innerHTML = TAG_TEMPLATE_HTML;
+    const firstChip = wrap1.firstElementChild;
+    
+    const valueEl1 = firstChip.querySelector('[fs-list-element="tag-value"]');
+    if (valueEl1) {
+      valueEl1.textContent = firstValue;
+    } else {
+      firstChip.textContent = firstValue;
+    }
+    
+    targetEl.appendChild(firstChip);
+    
+    // Si plus d'une checkbox cochée, créer une chip "+N more"
+    if (values.length > 1) {
+      const moreCount = values.length - 1;
+      const wrap2 = document.createElement('div');
+      wrap2.innerHTML = TAG_TEMPLATE_HTML;
+      const moreChip = wrap2.firstElementChild;
+      
+      const valueEl2 = moreChip.querySelector('[fs-list-element="tag-value"]');
+      if (valueEl2) {
+        valueEl2.textContent = `+${moreCount} more`;
+      } else {
+        moreChip.textContent = `+${moreCount} more`;
+      }
+      
+      targetEl.appendChild(moreChip);
+    }
+    
+    console.log(`✨ Updated chips display: ${values.length} filter(s) - showing "${firstValue}"${values.length > 1 ? ` and "+${values.length - 1} more"` : ''}`);
+  }
+
+  // ========================================================================
   // CHIP CREATION
   // ========================================================================
 
