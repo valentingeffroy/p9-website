@@ -100,6 +100,7 @@ const FilterChips = (() => {
   /**
    * Initialize clear button handlers
    * Intercepts Finsweet's clear buttons and resets only the specific field
+   * Fixes the bug where Finsweet decoche all checkboxes instead of only the target field
    */
   function initClearButtons() {
     window.FinsweetAttributes ||= [];
@@ -117,7 +118,6 @@ const FilterChips = (() => {
         console.log(`🔧 Setting up ${clearButtons.length} clear button(s)`);
         
         clearButtons.forEach(clearBtn => {
-          // Utiliser capture phase pour intercepter AVANT Finsweet
           clearBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation(); // Empêche Finsweet de traiter l'événement
@@ -130,32 +130,57 @@ const FilterChips = (() => {
             
             console.log(`🧹 Clear button clicked for field: "${field}"`);
             
+            // ÉTAPE 1 : Décocher manuellement les checkboxes dans le bon scope
+            const dropdown = clearBtn.closest('.w-dropdown');
+            if (dropdown) {
+              // Trouver tous les checkboxes checked avec ce field dans CE dropdown uniquement
+              const checkboxes = dropdown.querySelectorAll(
+                `input[fs-list-field="${field}"][type="checkbox"]:checked`
+              );
+              
+              console.log(`📋 Found ${checkboxes.length} checked checkbox(es) in dropdown for field "${field}"`);
+              
+              checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                // Déclencher l'événement change pour notifier Finsweet
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+              });
+            } else {
+              // Fallback : chercher dans tout le document si pas de dropdown parent
+              const checkboxes = document.querySelectorAll(
+                `input[fs-list-field="${field}"][type="checkbox"]:checked`
+              );
+              
+              console.log(`📋 Found ${checkboxes.length} checked checkbox(es) for field "${field}"`);
+              
+              checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+              });
+            }
+            
+            // ÉTAPE 2 : Reset via l'API Finsweet pour synchroniser les filtres
             // Log des filtres avant le reset
-            const filtersBefore = JSON.parse(JSON.stringify(listInstance.filters?.value));
+            const filtersBefore = JSON.parse(JSON.stringify(listInstance.filters?.value || {}));
             console.log('📊 Filters before reset:', filtersBefore);
             
-            // Gérer nous-mêmes via l'API - reset uniquement ce field spécifique
             if (listInstance.filters?.value?.groups) {
               listInstance.filters.value.groups = listInstance.filters.value.groups.map(group => {
-                // Filtrer : garder seulement les conditions qui NE sont PAS du field à supprimer
                 const filteredConditions = group.conditions.filter(
                   condition => condition.fieldKey !== field
                 );
-                
-                // Retourner le groupe seulement s'il a encore des conditions
                 return filteredConditions.length > 0 
                   ? { ...group, conditions: filteredConditions }
                   : null;
-              }).filter(group => group !== null); // Enlever les groupes vides
+              }).filter(group => group !== null);
               
-              // Si tous les groupes sont vides, réinitialiser complètement
               if (listInstance.filters.value.groups.length === 0) {
                 listInstance.filters.value.groups = [];
               }
             }
             
             // Log des filtres après le reset
-            const filtersAfter = JSON.parse(JSON.stringify(listInstance.filters?.value));
+            const filtersAfter = JSON.parse(JSON.stringify(listInstance.filters?.value || {}));
             console.log('📊 Filters after reset:', filtersAfter);
             
             // Log des filtres actifs restants
@@ -173,7 +198,7 @@ const FilterChips = (() => {
               });
             }
             console.log('✅ Active filters remaining:', activeFilters);
-          }, true); // true = capture phase (s'exécute avant Finsweet)
+          }, true); // Capture phase (s'exécute avant Finsweet)
         });
       }
     ]);
