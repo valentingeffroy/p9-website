@@ -100,7 +100,7 @@ const FilterChips = (() => {
   /**
    * Update chips display in target element
    * Shows first chip value, then "+N more" for remaining chips
-   * Manages placeholder visibility
+   * Manages placeholder and clear buttons visibility
    * @param {HTMLElement} targetEl - Target element where chips are displayed
    * @param {string} field - Field name (fs-list-field value)
    * @param {HTMLElement} dropdown - Dropdown container
@@ -117,11 +117,17 @@ const FilterChips = (() => {
     // Trouver le placeholder dans le dropdown
     const placeholder = dropdown.querySelector('.select-placeholder');
     
-    // Si aucune checkbox cochée, afficher le placeholder et retourner
+    // Trouver tous les boutons clear dans le dropdown
+    const clearButtons = dropdown.querySelectorAll('[fs-list-element="clear"]');
+    
+    // Si aucune checkbox cochée, afficher le placeholder et cacher les boutons clear
     if (checkedCheckboxes.length === 0) {
       if (placeholder) {
         placeholder.style.display = '';
       }
+      clearButtons.forEach(btn => {
+        btn.style.display = 'none';
+      });
       return;
     }
     
@@ -129,6 +135,11 @@ const FilterChips = (() => {
     if (placeholder) {
       placeholder.style.display = 'none';
     }
+    
+    // Afficher les boutons clear s'il y a des chips
+    clearButtons.forEach(btn => {
+      btn.style.display = '';
+    });
     
     // Récupérer les valeurs des checkboxes cochées
     const values = checkedCheckboxes.map(cb => {
