@@ -99,8 +99,8 @@ const FilterChips = (() => {
 
   /**
    * Initialize clear button handlers
-   * Intercepts Finsweet's clear buttons and resets only the specific field
-   * Fixes the bug where Finsweet decoche all checkboxes instead of only the target field
+   * Manages clear buttons with custom attributes (element="clear" and field="...")
+   * Resets only the specific field to fix Finsweet's bug
    */
   function initClearButtons() {
     window.FinsweetAttributes ||= [];
@@ -113,18 +113,18 @@ const FilterChips = (() => {
         }
         
         const listInstance = listInstances[0];
-        const clearButtons = document.querySelectorAll('[fs-list-element="clear"]');
+        const clearButtons = document.querySelectorAll('[element="clear"]');
         
         console.log(`🔧 Setting up ${clearButtons.length} clear button(s)`);
         
         clearButtons.forEach(clearBtn => {
           clearBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation(); // Empêche Finsweet de traiter l'événement
+            e.stopPropagation();
             
-            const field = clearBtn.getAttribute('fs-list-field');
+            const field = clearBtn.getAttribute('field');
             if (!field) {
-              console.warn('⚠️  Clear button has no fs-list-field attribute');
+              console.warn('⚠️  Clear button has no field attribute');
               return;
             }
             
