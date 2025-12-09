@@ -94,6 +94,92 @@ const FilterChips = (() => {
   }
 
   // ========================================================================
+  // CLEAR BUTTONS HANDLER
+  // ========================================================================
+
+  /**
+   * Initialize clear button handlers
+   * Intercepts Finsweet's clear buttons and resets only the specific field
+   */
+  function initClearButtons() {
+    window.FinsweetAttributes ||= [];
+    window.FinsweetAttributes.push([
+      'list',
+      (listInstances) => {
+        if (!listInstances || listInstances.length === 0) {
+          console.warn('⚠️  No Finsweet list instances found for clear buttons');
+          return;
+        }
+        
+        const listInstance = listInstances[0];
+        const clearButtons = document.querySelectorAll('[fs-list-element="clear"]');
+        
+        console.log(`🔧 Setting up ${clearButtons.length} clear button(s)`);
+        
+        clearButtons.forEach(clearBtn => {
+          // Utiliser capture phase pour intercepter AVANT Finsweet
+          clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation(); // Empêche Finsweet de traiter l'événement
+            
+            const field = clearBtn.getAttribute('fs-list-field');
+            if (!field) {
+              console.warn('⚠️  Clear button has no fs-list-field attribute');
+              return;
+            }
+            
+            console.log(`🧹 Clear button clicked for field: "${field}"`);
+            
+            // Log des filtres avant le reset
+            const filtersBefore = JSON.parse(JSON.stringify(listInstance.filters?.value));
+            console.log('📊 Filters before reset:', filtersBefore);
+            
+            // Gérer nous-mêmes via l'API - reset uniquement ce field spécifique
+            if (listInstance.filters?.value?.groups) {
+              listInstance.filters.value.groups = listInstance.filters.value.groups.map(group => {
+                // Filtrer : garder seulement les conditions qui NE sont PAS du field à supprimer
+                const filteredConditions = group.conditions.filter(
+                  condition => condition.fieldKey !== field
+                );
+                
+                // Retourner le groupe seulement s'il a encore des conditions
+                return filteredConditions.length > 0 
+                  ? { ...group, conditions: filteredConditions }
+                  : null;
+              }).filter(group => group !== null); // Enlever les groupes vides
+              
+              // Si tous les groupes sont vides, réinitialiser complètement
+              if (listInstance.filters.value.groups.length === 0) {
+                listInstance.filters.value.groups = [];
+              }
+            }
+            
+            // Log des filtres après le reset
+            const filtersAfter = JSON.parse(JSON.stringify(listInstance.filters?.value));
+            console.log('📊 Filters after reset:', filtersAfter);
+            
+            // Log des filtres actifs restants
+            const activeFilters = [];
+            if (listInstance.filters?.value?.groups) {
+              listInstance.filters.value.groups.forEach(group => {
+                group.conditions.forEach(condition => {
+                  if (condition.value && condition.value.length > 0) {
+                    activeFilters.push({
+                      fieldKey: condition.fieldKey,
+                      value: condition.value
+                    });
+                  }
+                });
+              });
+            }
+            console.log('✅ Active filters remaining:', activeFilters);
+          }, true); // true = capture phase (s'exécute avant Finsweet)
+        });
+      }
+    ]);
+  }
+
+  // ========================================================================
   // PUBLIC API
   // ========================================================================
 
@@ -102,6 +188,7 @@ const FilterChips = (() => {
    */
   function init() {
     initCloseDropdownHandlers();
+    initClearButtons();
   }
 
   return { init };
