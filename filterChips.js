@@ -120,7 +120,7 @@ const FilterChips = (() => {
     // Trouver tous les boutons clear dans le dropdown
     const clearButtons = dropdown.querySelectorAll('[fs-list-element="clear"]');
     
-    // Si aucune checkbox cochée, afficher le placeholder et cacher les boutons clear
+    // Si aucune checkbox cochée, afficher le placeholder, cacher les boutons clear et cacher le targetEl
     if (checkedCheckboxes.length === 0) {
       if (placeholder) {
         placeholder.style.display = '';
@@ -128,6 +128,8 @@ const FilterChips = (() => {
       clearButtons.forEach(btn => {
         btn.style.display = 'none';
       });
+      // Cacher l'élément target
+      targetEl.classList.add('hide');
       return;
     }
     
@@ -140,6 +142,9 @@ const FilterChips = (() => {
     clearButtons.forEach(btn => {
       btn.style.display = '';
     });
+    
+    // Afficher l'élément target s'il y a des chips
+    targetEl.classList.remove('hide');
     
     // Récupérer les valeurs des checkboxes cochées
     const values = checkedCheckboxes.map(cb => {
