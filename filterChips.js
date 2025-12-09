@@ -168,7 +168,7 @@ const FilterChips = (() => {
 
   /**
    * Initialize chip creation when checkboxes are checked
-   * Creates a chip in the target element when a filter checkbox is checked
+   * Updates chips display using updateChipsDisplay() when checkboxes change
    */
   function initChipCreation() {
     // Trouver tous les checkboxes de filtre
@@ -180,26 +180,12 @@ const FilterChips = (() => {
       checkbox.addEventListener('change', (e) => {
         const checkboxEl = e.target;
         
-        // Vérifier si la checkbox est cochée
-        if (!checkboxEl.checked) {
-          return;
-        }
-        
-        // Récupérer la valeur de la checkbox
-        const value = checkboxEl.getAttribute('fs-list-value') || checkboxEl.value;
-        if (!value) {
-          console.warn('⚠️  Checkbox has no fs-list-value or value attribute');
-          return;
-        }
-        
         // Récupérer le field de la checkbox (important pour trouver le target)
         const field = checkboxEl.getAttribute('fs-list-field');
         if (!field) {
           console.warn('⚠️  Checkbox has no fs-list-field attribute');
           return;
         }
-        
-        console.log(`✅ Checkbox checked - field: "${field}", value: "${value}"`);
         
         // Trouver le dropdown parent
         const dropdown = checkboxEl.closest('.w-dropdown');
@@ -215,25 +201,9 @@ const FilterChips = (() => {
           return;
         }
         
-        console.log(`📍 Target element found:`, targetEl);
-        
-        // Créer la chip à partir du template
-        const wrap = document.createElement('div');
-        wrap.innerHTML = TAG_TEMPLATE_HTML;
-        const chip = wrap.firstElementChild;
-        
-        // Mettre à jour le texte dans [fs-list-element="tag-value"]
-        const valueEl = chip.querySelector('[fs-list-element="tag-value"]');
-        if (valueEl) {
-          valueEl.textContent = value;
-        } else {
-          // Fallback : mettre le texte directement sur le chip
-          chip.textContent = value;
-        }
-        
-        // Ajouter la chip dans l'élément target
-        targetEl.appendChild(chip);
-        console.log(`✨ Chip created and added to target element`);
+        // Utiliser updateChipsDisplay() pour mettre à jour l'affichage
+        // Cela gère à la fois le coché et le décoché
+        updateChipsDisplay(targetEl, field, dropdown);
       });
     });
   }
