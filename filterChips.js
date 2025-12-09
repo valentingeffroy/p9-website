@@ -168,8 +168,8 @@ const FilterChips = (() => {
 
   /**
    * Initialize chip removal handlers
-   * When clicking on a custom chip, unchecks the corresponding checkbox
-   * For "+N more" chips, unchecks all checkboxes except the first one
+   * When clicking on a custom chip, clicks on the label parent of the corresponding checkbox
+   * For "+N more" chips, clicks on the label parent of all checkboxes except the first one
    */
   function initChipRemoval() {
     // Utiliser la délégation d'événement car les chips sont créés dynamiquement
@@ -220,16 +220,21 @@ const FilterChips = (() => {
           dropdown.querySelectorAll(`input[fs-list-field="${field}"][type="checkbox"]:checked`)
         );
         
-        // Décocher toutes sauf la première
+        // Cliquer sur le label parent de toutes les checkboxes sauf la première
         if (checkedCheckboxes.length > 1) {
           for (let i = 1; i < checkedCheckboxes.length; i++) {
-            checkedCheckboxes[i].checked = false;
-            // Déclencher l'événement change pour que notre listener mette à jour l'affichage
-            checkedCheckboxes[i].dispatchEvent(new Event('change', { bubbles: true }));
+            const checkbox = checkedCheckboxes[i];
+            const label = checkbox.closest('label.checkbox_field.is-tags');
+            if (label) {
+              label.click();
+            } else {
+              // Fallback : cliquer sur la checkbox directement
+              checkbox.click();
+            }
           }
         }
       } else {
-        // C'est une chip normale, trouver la checkbox correspondante et la décocher
+        // C'est une chip normale, trouver la checkbox correspondante et cliquer sur son label parent
         console.log(`🖱️  Chip clicked: "${chipValue}"`);
         
         // Trouver la checkbox avec cette valeur
@@ -242,10 +247,14 @@ const FilterChips = (() => {
           return;
         }
         
-        // Décocher la checkbox
-        checkbox.checked = false;
-        // Déclencher l'événement change pour que notre listener mette à jour l'affichage
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        // Trouver le label parent (checkbox_field is-tags) et cliquer dessus
+        const label = checkbox.closest('label.checkbox_field.is-tags');
+        if (label) {
+          label.click();
+        } else {
+          // Fallback : cliquer sur la checkbox directement
+          checkbox.click();
+        }
       }
     });
     
