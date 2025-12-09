@@ -94,6 +94,75 @@ const FilterChips = (() => {
   }
 
   // ========================================================================
+  // CHIP CREATION
+  // ========================================================================
+
+  /**
+   * Initialize chip creation when checkboxes are checked
+   * Creates a chip in the target element when a filter checkbox is checked
+   */
+  function initChipCreation() {
+    // Trouver tous les checkboxes de filtre
+    const filterCheckboxes = document.querySelectorAll('input[fs-list-field][type="checkbox"]');
+    
+    console.log(`🔧 Setting up chip creation for ${filterCheckboxes.length} checkbox(es)`);
+    
+    filterCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const checkboxEl = e.target;
+        
+        // Vérifier si la checkbox est cochée
+        if (!checkboxEl.checked) {
+          return;
+        }
+        
+        // Récupérer la valeur de la checkbox
+        const value = checkboxEl.getAttribute('fs-list-value') || checkboxEl.value;
+        if (!value) {
+          console.warn('⚠️  Checkbox has no fs-list-value or value attribute');
+          return;
+        }
+        
+        console.log(`✅ Checkbox checked with value: "${value}"`);
+        
+        // Trouver le dropdown parent
+        const dropdown = checkboxEl.closest('.w-dropdown');
+        if (!dropdown) {
+          console.warn('⚠️  Checkbox is not inside a .w-dropdown');
+          return;
+        }
+        
+        // Trouver l'élément target avec target="chips" et target-value correspondant
+        const targetEl = dropdown.querySelector(`[target="chips"][target-value="${value}"]`);
+        if (!targetEl) {
+          console.warn(`⚠️  No target element found with target="chips" and target-value="${value}" in dropdown`);
+          return;
+        }
+        
+        console.log(`📍 Target element found:`, targetEl);
+        
+        // Créer la chip à partir du template
+        const wrap = document.createElement('div');
+        wrap.innerHTML = TAG_TEMPLATE_HTML;
+        const chip = wrap.firstElementChild;
+        
+        // Mettre à jour le texte dans [fs-list-element="tag-value"]
+        const valueEl = chip.querySelector('[fs-list-element="tag-value"]');
+        if (valueEl) {
+          valueEl.textContent = value;
+        } else {
+          // Fallback : mettre le texte directement sur le chip
+          chip.textContent = value;
+        }
+        
+        // Ajouter la chip dans l'élément target
+        targetEl.appendChild(chip);
+        console.log(`✨ Chip created and added to target element`);
+      });
+    });
+  }
+
+  // ========================================================================
   // PUBLIC API
   // ========================================================================
 
@@ -102,6 +171,7 @@ const FilterChips = (() => {
    */
   function init() {
     initCloseDropdownHandlers();
+    initChipCreation();
   }
 
   return { init };
