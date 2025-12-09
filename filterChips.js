@@ -127,6 +127,7 @@ const FilterChips = (() => {
       }
       clearButtons.forEach(btn => {
         btn.style.display = 'none';
+        btn.classList.add('hide');
       });
       // Cacher l'élément target
       targetEl.classList.add('hide');
@@ -141,6 +142,7 @@ const FilterChips = (() => {
     // Afficher les boutons clear s'il y a des chips
     clearButtons.forEach(btn => {
       btn.style.display = '';
+      btn.classList.remove('hide');
     });
     
     // Afficher l'élément target s'il y a des chips
