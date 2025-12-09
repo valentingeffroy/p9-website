@@ -4,7 +4,7 @@
  */
 
 const Utils = (() => {
-  console.log('📦 Utils module loading...');
+  // console.log('📦 Utils module loading...');
 
   /**
    * Safely escape special characters in CSS selectors
@@ -47,7 +47,7 @@ const Utils = (() => {
     (label || inp).click();
   };
 
-  console.log('✅ Utils module loaded');
+  // console.log('✅ Utils module loaded');
 
   return {
     cssEscape,

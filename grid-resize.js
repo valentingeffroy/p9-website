@@ -30,9 +30,9 @@ const GridResize = (() => {
     const cellsToMeasure = allCells.length > 0 ? allCells : 
       Array.from(grids).flatMap(grid => Array.from(grid.children));
 
-    console.log('📊 Nombre de grids:', grids.length);
-    console.log('📊 Nombre de cellules à mesurer:', cellsToMeasure.length);
-    console.log('📊 Premières cellules:', cellsToMeasure.slice(0, 12).map((c, i) => ({
+    // console.log('📊 Nombre de grids:', grids.length);
+    // console.log('📊 Nombre de cellules à mesurer:', cellsToMeasure.length);
+    // console.log('📊 Premières cellules:', cellsToMeasure.slice(0, 12).map((c, i) => ({
       index: i,
       column: i % 4,
       content: c.textContent.substring(0, 40).trim(),
@@ -84,13 +84,13 @@ const GridResize = (() => {
         
         if (width > columnWidths[columnIndex]) {
           columnWidths[columnIndex] = width;
-          console.log(`📏 Colonne ${columnIndex} mise à jour: ${width}px (contenu: ${cell.textContent.substring(0, 30)})`);
+          // console.log(`📏 Colonne ${columnIndex} mise à jour: ${width}px (contenu: ${cell.textContent.substring(0, 30)})`);
         }
       }
     });
 
-    console.log('📊 Largeurs calculées (columnWidths):', columnWidths);
-    console.log('📊 Largeurs actuelles (currentMaxWidths):', currentMaxWidths);
+    // console.log('📊 Largeurs calculées (columnWidths):', columnWidths);
+    // console.log('📊 Largeurs actuelles (currentMaxWidths):', currentMaxWidths);
 
     // Ne grandir que si nécessaire (jamais rétrécir)
     let hasChanged = false;
@@ -114,8 +114,8 @@ const GridResize = (() => {
       ).join(' ');
       
       styleElement.textContent = `.company_grid { grid-template-columns: ${template} !important; }`;
-      console.log('📊 CSS appliqué:', styleElement.textContent);
-      console.log('📊 Largeurs finales (currentMaxWidths):', currentMaxWidths);
+      // console.log('📊 CSS appliqué:', styleElement.textContent);
+      // console.log('📊 Largeurs finales (currentMaxWidths):', currentMaxWidths);
     }
     
     // Recalculer le fade mobile après ajustement des grids

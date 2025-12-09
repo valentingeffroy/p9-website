@@ -5,14 +5,14 @@
  */
 
 const GlobalSite = (() => {
-  console.log('📦 GlobalSite module loading...');
+  // console.log('📦 GlobalSite module loading...');
 
   // ========================================================================
   // MENU ANIMATION MODULE
   // ========================================================================
 
   function initMenuAnimation() {
-    console.log('   🎬 Initializing menu animation...');
+    // console.log('   🎬 Initializing menu animation...');
 
     const MENU_BUTTON = '.navbar1_menu-button.w-nav-button';
     const LINKS = '.navbar1_link';
@@ -33,7 +33,7 @@ const GlobalSite = (() => {
       return;
     }
 
-    console.log(`   ✓ Found ${links.length} menu links`);
+    // console.log(`   ✓ Found ${links.length} menu links`);
 
     // Set initial state for links (hidden)
     links.forEach(link => {
@@ -85,7 +85,7 @@ const GlobalSite = (() => {
       attributeFilter: ['class']
     });
 
-    console.log('   ✓ Menu animation initialized');
+    // console.log('   ✓ Menu animation initialized');
   }
 
   // ========================================================================
@@ -93,7 +93,7 @@ const GlobalSite = (() => {
   // ========================================================================
 
   function initNavbarShadow() {
-    console.log('   🌑 Initializing navbar shadow...');
+    // console.log('   🌑 Initializing navbar shadow...');
 
     const NAVBAR = '.navbar1_component';
     const HIDE_DELAY = 1000; // Linger for 1s after scroll stops (like original code)
@@ -105,7 +105,7 @@ const GlobalSite = (() => {
       return;
     }
 
-    console.log('   ✓ Navbar found:', navbar);
+    // console.log('   ✓ Navbar found:', navbar);
 
     let isActive = false; // true only after navbar top touches viewport top
     let hideTimer = null;
@@ -129,13 +129,13 @@ const GlobalSite = (() => {
       if (isAtTop && !isActive) {
         // Navbar just reached top - activate
         isActive = true;
-        console.log('   ✅ Navbar reached top - activating shadow');
+        // console.log('   ✅ Navbar reached top - activating shadow');
       } else if (!isAtTop && isActive) {
         // Navbar moved above top - deactivate
         isActive = false;
         clearTimeout(hideTimer);
         navbar.classList.remove('is-shadow');
-        console.log('   ❌ Navbar above top - deactivating shadow');
+        // console.log('   ❌ Navbar above top - deactivating shadow');
       }
     };
 
@@ -150,7 +150,7 @@ const GlobalSite = (() => {
       }
     }, { passive: true });
 
-    console.log('   ✓ Navbar shadow initialized');
+    // console.log('   ✓ Navbar shadow initialized');
   }
 
   // ========================================================================
@@ -158,7 +158,7 @@ const GlobalSite = (() => {
   // ========================================================================
 
   function initNewsletterFormFadeOut() {
-    console.log('   📧 Initializing newsletter form fade-out...');
+    // console.log('   📧 Initializing newsletter form fade-out...');
 
     const form = document.querySelector('form[form-footer="form"]');
     if (!form) {
@@ -178,7 +178,7 @@ const GlobalSite = (() => {
       return;
     }
 
-    console.log('   ✓ Newsletter form and section found');
+    // console.log('   ✓ Newsletter form and section found');
 
     const MESSAGE_DISPLAY_DURATION = 5000; // 5 seconds
     const FADEOUT_DURATION = 500; // 0.5 seconds
@@ -194,21 +194,21 @@ const GlobalSite = (() => {
       if (fadeOutTriggered) return;
       fadeOutTriggered = true;
 
-      console.log('   ✅ Form submitted, waiting 5s before fade-out...');
+      // console.log('   ✅ Form submitted, waiting 5s before fade-out...');
 
       // Wait 5 seconds, then fade out
       setTimeout(() => {
-        console.log('   🎬 Starting fade-out animation...');
+        // console.log('   🎬 Starting fade-out animation...');
 
         // Use requestAnimationFrame to ensure transition is applied
         requestAnimationFrame(() => {
           formSection.style.opacity = '0';
-          console.log('   ✅ Form section faded out');
+          // console.log('   ✅ Form section faded out');
         });
       }, MESSAGE_DISPLAY_DURATION);
     });
 
-    console.log('   ✓ Newsletter form fade-out initialized');
+    // console.log('   ✓ Newsletter form fade-out initialized');
   }
 
   // ========================================================================
@@ -216,7 +216,7 @@ const GlobalSite = (() => {
   // ========================================================================
 
   function init() {
-    console.log('🚀 GlobalSite.init() called');
+    // console.log('🚀 GlobalSite.init() called');
 
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
@@ -224,14 +224,14 @@ const GlobalSite = (() => {
         initMenuAnimation();
         initNavbarShadow();
         initNewsletterFormFadeOut();
-        console.log('✅ GlobalSite initialized');
+        // console.log('✅ GlobalSite initialized');
       });
     } else {
       // DOM already ready
       initMenuAnimation();
       initNavbarShadow();
       initNewsletterFormFadeOut();
-      console.log('✅ GlobalSite initialized');
+      // console.log('✅ GlobalSite initialized');
     }
   }
 

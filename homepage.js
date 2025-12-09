@@ -3,42 +3,42 @@
  * Initializes: Tooltips + VimeoLightbox + GlobalSite (navbar menu) + Tabs
  */
 
-console.log('═════════════════════════════════════════════════════════════');
-console.log('🏠 HOME PAGE SCRIPT LOADING');
-console.log('═════════════════════════════════════════════════════════════');
+// console.log('═════════════════════════════════════════════════════════════');
+// console.log('🏠 HOME PAGE SCRIPT LOADING');
+// console.log('═════════════════════════════════════════════════════════════');
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('📍 DOMContentLoaded event fired');
+  // console.log('📍 DOMContentLoaded event fired');
 
   try {
-    console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
+    // console.log('1️⃣  Initializing GlobalSite (Navbar Menu)...');
     GlobalSite.init();
   } catch (e) {
     console.error('   ❌ Error in GlobalSite.init():', e);
   }
 
   try {
-    console.log('2️⃣  Initializing Tooltips...');
+    // console.log('2️⃣  Initializing Tooltips...');
     Tooltips.init();
   } catch (e) {
     console.error('   ❌ Error in Tooltips.init():', e);
   }
 
   try {
-    console.log('3️⃣  Initializing Vimeo Lightbox...');
+    // console.log('3️⃣  Initializing Vimeo Lightbox...');
     VimeoLightbox.init();
   } catch (e) {
     console.error('   ❌ Error in VimeoLightbox.init():', e);
   }
 
   try {
-    console.log('4️⃣  Initializing Tabs...');
+    // console.log('4️⃣  Initializing Tabs...');
     Tabs.init();
   } catch (e) {
     console.error('   ❌ Error in Tabs.init():', e);
   }
 
-  console.log('═════════════════════════════════════════════════════════════');
-  console.log('✨ HOME PAGE INITIALIZATION COMPLETE ✨');
-  console.log('═════════════════════════════════════════════════════════════');
+  // console.log('═════════════════════════════════════════════════════════════');
+  // console.log('✨ HOME PAGE INITIALIZATION COMPLETE ✨');
+  // console.log('═════════════════════════════════════════════════════════════');
 });

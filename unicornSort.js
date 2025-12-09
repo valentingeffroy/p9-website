@@ -5,7 +5,7 @@
  */
 
 const UnicornSort = (() => {
-  console.log('📦 UnicornSort module loading...');
+  // console.log('📦 UnicornSort module loading...');
 
   /**
    * Check if a ListItem is a unicorn (contains <div sort="unicorn">true</div>)
@@ -26,7 +26,7 @@ const UnicornSort = (() => {
    * Initialize unicorn sort functionality
    */
   function init() {
-    console.log('🚀 UnicornSort.init() called');
+    // console.log('🚀 UnicornSort.init() called');
 
     // Wait for Finsweet Attributes to be available
     if (!window.FinsweetAttributes) {
@@ -72,7 +72,7 @@ const UnicornSort = (() => {
           return;
         }
 
-        console.log('   ✓ Checkbox and list instance found');
+        // console.log('   ✓ Checkbox and list instance found');
 
         // Flag to control whether unicorn sort is active
         let isUnicornSortActive = checkbox.checked;
@@ -96,7 +96,7 @@ const UnicornSort = (() => {
             }
           });
 
-          console.log(`   🦄 Sorting: ${unicorns.length} unicorn(s) first, ${others.length} other(s)`);
+          // console.log(`   🦄 Sorting: ${unicorns.length} unicorn(s) first, ${others.length} other(s)`);
 
           // Return unicorns first, then others
           return [...unicorns, ...others];
@@ -108,9 +108,9 @@ const UnicornSort = (() => {
           isUnicornSortActive = isChecked;
 
           if (isChecked) {
-            console.log('   🦄 Unicorn sort activated');
+            // console.log('   🦄 Unicorn sort activated');
           } else {
-            console.log('   🔄 Unicorn sort deactivated - restoring default order');
+            // console.log('   🔄 Unicorn sort deactivated - restoring default order');
           }
 
           // Trigger a re-sort to apply the change
@@ -119,10 +119,10 @@ const UnicornSort = (() => {
 
         // If checkbox is already checked on page load, the hook will handle it
         if (checkbox.checked) {
-          console.log('   ℹ️  Checkbox already checked on load, unicorn sort will be applied');
+          // console.log('   ℹ️  Checkbox already checked on load, unicorn sort will be applied');
         }
 
-        console.log('✅ UnicornSort initialized');
+        // console.log('✅ UnicornSort initialized');
       }
     ]);
   }

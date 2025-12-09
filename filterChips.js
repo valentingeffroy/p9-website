@@ -189,7 +189,7 @@ const FilterChips = (() => {
       targetEl.appendChild(moreChip);
     }
     
-    console.log(`✨ Updated chips display: ${values.length} filter(s) - showing "${firstValue}"${values.length > 1 ? ` and "+${values.length - 1} more"` : ''}`);
+    // console.log(`✨ Updated chips display: ${values.length} filter(s) - showing "${firstValue}"${values.length > 1 ? ` and "+${values.length - 1} more"` : ''}`);
   }
 
   // ========================================================================
@@ -220,21 +220,21 @@ const FilterChips = (() => {
       // Récupérer la valeur de la chip cliquée
       const valueEl = clickedChip.querySelector('[fs-list-element="tag-value"]');
       if (!valueEl) {
-        console.warn('⚠️  Chip has no tag-value element');
+        // console.warn('⚠️  Chip has no tag-value element');
         return;
       }
       
       const chipValue = valueEl.textContent.trim();
       const dropdown = targetEl.closest('.w-dropdown');
       if (!dropdown) {
-        console.warn('⚠️  No dropdown found');
+        // console.warn('⚠️  No dropdown found');
         return;
       }
       
       // Récupérer le field depuis target-value
       const field = targetEl.getAttribute('target-value');
       if (!field) {
-        console.warn('⚠️  Target has no target-value attribute');
+        // console.warn('⚠️  Target has no target-value attribute');
         return;
       }
       
@@ -243,7 +243,7 @@ const FilterChips = (() => {
       
       // Si c'est une chip "+N more"
       if (chipValue.startsWith('+') && chipValue.includes('more')) {
-        console.log(`🖱️  "+N more" chip clicked, removing all except first`);
+        // console.log(`🖱️  "+N more" chip clicked, removing all except first`);
         
         // Récupérer toutes les checkboxes cochées pour ce field
         const checkedCheckboxes = Array.from(
@@ -265,7 +265,7 @@ const FilterChips = (() => {
         }
       } else {
         // C'est une chip normale, trouver la checkbox correspondante et cliquer sur son label parent
-        console.log(`🖱️  Chip clicked: "${chipValue}"`);
+        // console.log(`🖱️  Chip clicked: "${chipValue}"`);
         
         // Trouver la checkbox avec cette valeur
         const checkbox = dropdown.querySelector(
@@ -273,7 +273,7 @@ const FilterChips = (() => {
         );
         
         if (!checkbox) {
-          console.warn(`⚠️  No checkbox found for value: "${chipValue}"`);
+          // console.warn(`⚠️  No checkbox found for value: "${chipValue}"`);
           return;
         }
         
@@ -288,7 +288,7 @@ const FilterChips = (() => {
       }
     });
     
-    console.log('🔧 Chip removal handlers initialized');
+    // console.log('🔧 Chip removal handlers initialized');
   }
 
   // ========================================================================
@@ -303,7 +303,7 @@ const FilterChips = (() => {
     // Trouver tous les checkboxes de filtre
     const filterCheckboxes = document.querySelectorAll('input[fs-list-field][type="checkbox"]');
     
-    console.log(`🔧 Setting up chip creation for ${filterCheckboxes.length} checkbox(es)`);
+    // console.log(`🔧 Setting up chip creation for ${filterCheckboxes.length} checkbox(es)`);
     
     filterCheckboxes.forEach(checkbox => {
       checkbox.addEventListener('change', (e) => {
@@ -312,21 +312,21 @@ const FilterChips = (() => {
         // Récupérer le field de la checkbox (important pour trouver le target)
         const field = checkboxEl.getAttribute('fs-list-field');
         if (!field) {
-          console.warn('⚠️  Checkbox has no fs-list-field attribute');
+          // console.warn('⚠️  Checkbox has no fs-list-field attribute');
           return;
         }
         
         // Trouver le dropdown parent
         const dropdown = checkboxEl.closest('.w-dropdown');
         if (!dropdown) {
-          console.warn('⚠️  Checkbox is not inside a .w-dropdown');
+          // console.warn('⚠️  Checkbox is not inside a .w-dropdown');
           return;
         }
         
         // Trouver l'élément target avec target="chips" et target-value correspondant au FIELD
         const targetEl = dropdown.querySelector(`[target="chips"][target-value="${field}"]`);
         if (!targetEl) {
-          console.warn(`⚠️  No target element found with target="chips" and target-value="${field}" in dropdown`);
+          // console.warn(`⚠️  No target element found with target="chips" and target-value="${field}" in dropdown`);
           return;
         }
         
@@ -360,7 +360,7 @@ const FilterChips = (() => {
       updateChipsDisplay(targetEl, field, dropdown);
     });
     
-    console.log(`🔧 Initialized chips display for ${targetElements.length} target element(s)`);
+    // console.log(`🔧 Initialized chips display for ${targetElements.length} target element(s)`);
   }
 
   // ========================================================================
