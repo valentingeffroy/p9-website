@@ -330,6 +330,32 @@ const FilterChips = (() => {
     });
   }
 
+  /**
+   * Initialize chips display for all dropdowns on page load
+   * Ensures placeholder and clear buttons are in the correct state
+   */
+  function initChipsDisplay() {
+    // Trouver tous les éléments target avec target="chips"
+    const targetElements = document.querySelectorAll('[target="chips"]');
+    
+    targetElements.forEach(targetEl => {
+      const field = targetEl.getAttribute('target-value');
+      if (!field) {
+        return;
+      }
+      
+      const dropdown = targetEl.closest('.w-dropdown');
+      if (!dropdown) {
+        return;
+      }
+      
+      // Initialiser l'affichage pour ce dropdown/field
+      updateChipsDisplay(targetEl, field, dropdown);
+    });
+    
+    console.log(`🔧 Initialized chips display for ${targetElements.length} target element(s)`);
+  }
+
   // ========================================================================
   // PUBLIC API
   // ========================================================================
@@ -341,6 +367,7 @@ const FilterChips = (() => {
     initCloseDropdownHandlers();
     initChipCreation();
     initChipRemoval();
+    initChipsDisplay(); // Initialiser l'état au démarrage
   }
 
   return { init };
