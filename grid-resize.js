@@ -33,12 +33,12 @@ const GridResize = (() => {
     // console.log('📊 Nombre de grids:', grids.length);
     // console.log('📊 Nombre de cellules à mesurer:', cellsToMeasure.length);
     // console.log('📊 Premières cellules:', cellsToMeasure.slice(0, 12).map((c, i) => ({
-      index: i,
-      column: i % 4,
-      content: c.textContent.substring(0, 40).trim(),
-      hasClass: c.classList.contains('company_flex-block'),
-      html: c.innerHTML.substring(0, 50)
-    })));
+    //   index: i,
+    //   column: i % 4,
+    //   content: c.textContent.substring(0, 40).trim(),
+    //   hasClass: c.classList.contains('company_flex-block'),
+    //   html: c.innerHTML.substring(0, 50)
+    // })));
 
     // Mesurer toutes les cellules et déterminer la colonne globalement
     cellsToMeasure.forEach((cell, index) => {
