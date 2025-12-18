@@ -25,6 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   try {
+    // console.log('2.5️⃣  Initializing Hide Zero Facet Filters...');
+    HideZeroFacetFilters.init();
+  } catch (e) {
+    console.error('   ❌ Error in HideZeroFacetFilters.init():', e);
+  }
+
+  try {
     // console.log('3️⃣  Initializing Tooltips...');
     Tooltips.init();
   } catch (e) {

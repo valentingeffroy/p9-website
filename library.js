@@ -24,6 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('   ❌ Error in FilterChips.init():', e);
   }
 
+  try {
+    // console.log('2.5️⃣  Initializing Hide Zero Facet Filters...');
+    HideZeroFacetFilters.init();
+  } catch (e) {
+    console.error('   ❌ Error in HideZeroFacetFilters.init():', e);
+  }
+
   // console.log('═════════════════════════════════════════════════════════════');
   // console.log('✨ LIBRARY PAGE INITIALIZATION COMPLETE ✨');
   // console.log('═════════════════════════════════════════════════════════════');
