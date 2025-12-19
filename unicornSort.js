@@ -23,6 +23,24 @@ const UnicornSort = (() => {
   }
 
   /**
+   * Get company name for sorting (case-insensitive)
+   * @param {ListItem} item - The list item
+   * @returns {string} Company name in lowercase for comparison
+   */
+  function getCompanyName(item) {
+    if (!item.element) return '';
+    
+    // Find the element with sort="name" attribute
+    const nameElement = item.element.querySelector('div[sort="name"]');
+    if (nameElement) {
+      return nameElement.textContent.trim().toLowerCase();
+    }
+    
+    // Fallback: empty string if not found
+    return '';
+  }
+
+  /**
    * Initialize unicorn sort functionality
    */
   function init() {
@@ -94,6 +112,20 @@ const UnicornSort = (() => {
             } else {
               others.push(item);
             }
+          });
+
+          // Sort unicorns alphabetically (case-insensitive)
+          unicorns.sort((a, b) => {
+            const nameA = getCompanyName(a);
+            const nameB = getCompanyName(b);
+            return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+          });
+
+          // Sort others alphabetically (case-insensitive)
+          others.sort((a, b) => {
+            const nameA = getCompanyName(a);
+            const nameB = getCompanyName(b);
+            return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
           });
 
           // console.log(`   🦄 Sorting: ${unicorns.length} unicorn(s) first, ${others.length} other(s)`);
