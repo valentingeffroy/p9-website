@@ -50,7 +50,8 @@ const HideZeroFacetFilters = (() => {
   /**
    * Initialize the module
    * Waits for Finsweet Attributes to be available, then uses the list API
-   * to wait for list instances to be loaded before hiding zero-count filters
+   * to wait for list instances to be loaded and uses the afterRender hook
+   * to ensure facet-counts are calculated before hiding zero-count filters
    */
   function init() {
     // console.log('🚀 HideZeroFacetFilters.init() called');
@@ -73,12 +74,26 @@ const HideZeroFacetFilters = (() => {
           return;
         }
 
-        // Once list instances are loaded, hide zero-count filters
-        // Use a small delay to ensure facet-counts are updated
-        setTimeout(() => {
-          hideZeroFacetCountElements();
-          // console.log('✅ HideZeroFacetFilters initialized');
-        }, 100);
+        // Flag to ensure we only run once
+        let hasRun = false;
+
+        // Use the afterRender hook to ensure everything is rendered
+        // This ensures facet-counts are calculated and displayed
+        listInstances.forEach((listInstance) => {
+          if (listInstance.addHook) {
+            listInstance.addHook('afterRender', () => {
+              // Only run once after the initial render
+              if (!hasRun) {
+                hasRun = true;
+                // Small delay to ensure facet-counts are fully updated in the DOM
+                setTimeout(() => {
+                  hideZeroFacetCountElements();
+                  // console.log('✅ HideZeroFacetFilters initialized');
+                }, 100);
+              }
+            });
+          }
+        });
       }
     ]);
   }
