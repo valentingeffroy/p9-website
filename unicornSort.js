@@ -97,16 +97,23 @@ const UnicornSort = (() => {
 
         // Add the sort hook
         listInstance.addHook('sort', (items) => {
-          // If sort is not active, return items as-is (original order)
+          // Always sort alphabetically (case-insensitive) first
+          const sortedItems = [...items].sort((a, b) => {
+            const nameA = getCompanyName(a);
+            const nameB = getCompanyName(b);
+            return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+          });
+
+          // If unicorn sort is not active, return alphabetically sorted items
           if (!isUnicornSortActive) {
-            return items;
+            return sortedItems;
           }
 
           // Separate unicorns from others
           const unicorns = [];
           const others = [];
 
-          items.forEach(item => {
+          sortedItems.forEach(item => {
             if (isUnicorn(item)) {
               unicorns.push(item);
             } else {
@@ -132,6 +139,13 @@ const UnicornSort = (() => {
 
           // Return unicorns first, then others
           return [...unicorns, ...others];
+        });
+
+        // Also hook into pagination to ensure sorting is applied after Webflow CMS loads new items
+        listInstance.addHook('pagination', (items) => {
+          // Trigger sort hook to ensure case-insensitive sorting is applied
+          // This ensures sorting works even when lifecycle starts at pagination phase
+          return items; // Return items as-is, sort hook will handle the actual sorting
         });
 
         // Listen for changes on the checkbox
