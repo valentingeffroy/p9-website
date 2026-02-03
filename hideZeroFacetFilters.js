@@ -1,6 +1,6 @@
 /**
  * HIDE ZERO FACET FILTERS MODULE
- * Hides filter options with facet-count = 0 in each filter dropdown
+ * Hides filter options with facet-count = 0 in filter dropdowns and direct filter lists
  * Waits for Finsweet list instances to be loaded and filter phase to complete before executing
  */
 
@@ -9,39 +9,42 @@ const HideZeroFacetFilters = (() => {
 
   /**
    * Hide all filter labels that have a facet-count of 0
-   * Finds all dropdowns, then for each dropdown finds elements with facet-count = 0
-   * and hides their parent label.checkbox_field.is-tags
+   * Finds all elements with facet-count in the page, then hides their parent label.checkbox_field
+   * Works for both dropdown filters and direct filter lists
    */
   function hideZeroFacetCountElements() {
-    // Trouver tous les dropdowns de filtres
-    const dropdowns = document.querySelectorAll('.w-dropdown');
+    // Trouver tous les éléments avec facet-count dans la page
+    // Pas seulement dans les dropdowns, mais aussi dans les listes de filtres directes
+    const facetCountElements = document.querySelectorAll('[fs-list-element="facet-count"]');
     
-    if (dropdowns.length === 0) {
-      // console.warn('   ⚠️  No dropdowns found');
+    if (facetCountElements.length === 0) {
+      // console.warn('   ⚠️  No facet-count elements found');
       return;
     }
 
     let hiddenCount = 0;
 
-    dropdowns.forEach((dropdown) => {
-      // Trouver tous les éléments avec facet-count dans ce dropdown
-      const facetCountElements = dropdown.querySelectorAll('[fs-list-element="facet-count"]');
+    facetCountElements.forEach((facetCountEl) => {
+      // Vérifier si le contenu textuel est égal à "0"
+      const countText = facetCountEl.textContent.trim();
       
-      facetCountElements.forEach((facetCountEl) => {
-        // Vérifier si le contenu textuel est égal à "0"
-        const countText = facetCountEl.textContent.trim();
+      if (countText === '0') {
+        // Trouver le label parent (checkbox_field, avec ou sans is-tags)
+        // Chercher d'abord avec is-tags, puis sans
+        let label = facetCountEl.closest('label.checkbox_field.is-tags');
+        if (!label) {
+          label = facetCountEl.closest('label.checkbox_field');
+        }
         
-        if (countText === '0') {
-          // Trouver le label parent (checkbox_field is-tags)
-          const label = facetCountEl.closest('label.checkbox_field.is-tags');
-          
-          if (label) {
+        if (label) {
+          // Vérifier que le label n'est pas déjà masqué
+          if (label.style.display !== 'none') {
             // Masquer le label avec display: none
             label.style.display = 'none';
             hiddenCount++;
           }
         }
-      });
+      }
     });
 
     // console.log(`   ✅ Hidden ${hiddenCount} filter option(s) with facet-count = 0`);
