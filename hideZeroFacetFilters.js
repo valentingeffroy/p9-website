@@ -1,7 +1,7 @@
 /**
  * HIDE ZERO FACET FILTERS MODULE
  * Hides filter options with facet-count = 0 in each filter dropdown
- * Waits for Finsweet list instances to be loaded before executing
+ * Waits for Finsweet list instances to be loaded and filter phase to complete before executing
  */
 
 const HideZeroFacetFilters = (() => {
@@ -50,8 +50,9 @@ const HideZeroFacetFilters = (() => {
   /**
    * Initialize the module
    * Waits for Finsweet Attributes to be available, then uses the list API
-   * to wait for list instances to be loaded and uses the afterRender hook
+   * to wait for list instances to be loaded and uses the filter + afterRender hooks
    * to ensure facet-counts are calculated before hiding zero-count filters
+   * Only runs once on page load, not when filters change
    */
   function init() {
     // console.log('🚀 HideZeroFacetFilters.init() called');
@@ -74,22 +75,30 @@ const HideZeroFacetFilters = (() => {
           return;
         }
 
-        // Flag to ensure we only run once
+        // Flag to ensure we only run once on initial page load
         let hasRun = false;
 
-        // Use the afterRender hook to ensure everything is rendered
-        // This ensures facet-counts are calculated and displayed
+        // Use both filter and afterRender hooks to ensure facet-counts are calculated
+        // The filter hook ensures filtering is complete, afterRender ensures DOM is updated
         listInstances.forEach((listInstance) => {
           if (listInstance.addHook) {
+            // Hook into filter phase to wait for initial filtering to complete
+            listInstance.addHook('filter', async (items) => {
+              // Return items unchanged, we just want to wait for this phase
+              return items;
+            });
+
+            // Hook into afterRender to hide zero-count filters after facet-counts are updated
+            // Only run once after the initial render
             listInstance.addHook('afterRender', () => {
-              // Only run once after the initial render
               if (!hasRun) {
                 hasRun = true;
-                // Small delay to ensure facet-counts are fully updated in the DOM
+                // Use a small delay to ensure facet-counts are fully updated in the DOM
+                // after the filter phase completes
                 setTimeout(() => {
                   hideZeroFacetCountElements();
                   // console.log('✅ HideZeroFacetFilters initialized');
-                }, 100);
+                }, 150);
               }
             });
           }
