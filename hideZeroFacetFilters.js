@@ -55,7 +55,7 @@ const HideZeroFacetFilters = (() => {
    * Waits for Finsweet Attributes to be available, then uses the list API
    * to wait for list instances to be loaded and uses the afterRender hook
    * to ensure facet-counts are calculated before hiding zero-count filters
-   * Uses a retry mechanism (500ms initial, then every 1000ms, max 5 attempts)
+   * Uses a retry mechanism (5000ms initial, then every 1000ms, max 5 attempts)
    * Stops if user interacts with filters or when facet-counts are ready
    * Only runs once on page load, not when filters change
    */
@@ -148,8 +148,8 @@ const HideZeroFacetFilters = (() => {
             // Only run once after the initial render
             listInstance.addHook('afterRender', () => {
               if (!hasRun) {
-                // Attendre 500ms initial, puis commencer les tentatives
-                timeoutId = setTimeout(checkAndHide, 500);
+                // Attendre 5 secondes initial, puis commencer les tentatives
+                timeoutId = setTimeout(checkAndHide, 5000);
               }
             });
           }
